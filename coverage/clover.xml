@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1780414552701" clover="3.2.0">
+  <project timestamp="1780414552701" name="All files">
+    <metrics statements="168" coveredstatements="168" conditionals="33" coveredconditionals="33" methods="171" coveredmethods="171" elements="372" coveredelements="372" complexity="0" loc="168" ncloc="168" packages="2" files="12" classes="12"/>
+    <package name="lib">
+      <metrics statements="20" coveredstatements="20" conditionals="13" coveredconditionals="13" methods="5" coveredmethods="5"/>
+      <file name="price.js" path="C:\projectcynt\ferrotech-frontend\lib\price.js">
+        <metrics statements="8" coveredstatements="8" conditionals="4" coveredconditionals="4" methods="2" coveredmethods="2"/>
+        <line num="9" count="12" type="cond" truecount="2" falsecount="0"/>
+        <line num="10" count="9" type="stmt"/>
+        <line num="11" count="9" type="stmt"/>
+        <line num="12" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="23" count="9" type="stmt"/>
+        <line num="24" count="9" type="stmt"/>
+        <line num="25" count="9" type="stmt"/>
+        <line num="26" count="9" type="stmt"/>
+      </file>
+      <file name="validation.js" path="C:\projectcynt\ferrotech-frontend\lib\validation.js">
+        <metrics statements="12" coveredstatements="12" conditionals="9" coveredconditionals="9" methods="3" coveredmethods="3"/>
+        <line num="9" count="4" type="stmt"/>
+        <line num="10" count="4" type="stmt"/>
+        <line num="11" count="6" type="stmt"/>
+        <line num="12" count="6" type="cond" truecount="5" falsecount="0"/>
+        <line num="13" count="4" type="stmt"/>
+        <line num="16" count="4" type="stmt"/>
+        <line num="27" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="30" count="2" type="stmt"/>
+        <line num="40" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="41" count="4" type="stmt"/>
+        <line num="42" count="4" type="stmt"/>
+      </file>
+    </package>
+    <package name="stores">
+      <metrics statements="148" coveredstatements="148" conditionals="20" coveredconditionals="20" methods="166" coveredmethods="166"/>
+      <file name="clientes.store.js" path="C:\projectcynt\ferrotech-frontend\stores\clientes.store.js">
+        <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="16" coveredmethods="16"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="22" count="3" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="25" count="1" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="33" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="36" count="2" type="stmt"/>
+        <line num="37" count="6" type="stmt"/>
+        <line num="40" count="5" type="stmt"/>
+        <line num="43" count="3" type="stmt"/>
+        <line num="44" count="3" type="stmt"/>
+        <line num="45" count="25" type="stmt"/>
+      </file>
+      <file name="compras.store.js" path="C:\projectcynt\ferrotech-frontend\stores\compras.store.js">
+        <metrics statements="16" coveredstatements="16" conditionals="2" coveredconditionals="2" methods="17" coveredmethods="17"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="13" count="3" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="32" count="6" type="stmt"/>
+        <line num="35" count="5" type="stmt"/>
+        <line num="38" count="3" type="stmt"/>
+        <line num="39" count="3" type="stmt"/>
+        <line num="40" count="17" type="stmt"/>
+      </file>
+      <file name="cotizaciones.store.js" path="C:\projectcynt\ferrotech-frontend\stores\cotizaciones.store.js">
+        <metrics statements="16" coveredstatements="16" conditionals="2" coveredconditionals="2" methods="17" coveredmethods="17"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="13" count="3" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="32" count="6" type="stmt"/>
+        <line num="35" count="5" type="stmt"/>
+        <line num="38" count="2" type="stmt"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="40" count="6" type="stmt"/>
+      </file>
+      <file name="envios.store.js" path="C:\projectcynt\ferrotech-frontend\stores\envios.store.js">
+        <metrics statements="16" coveredstatements="16" conditionals="2" coveredconditionals="2" methods="17" coveredmethods="17"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="12" count="1" type="stmt"/>
+        <line num="13" count="3" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="32" count="6" type="stmt"/>
+        <line num="35" count="5" type="stmt"/>
+        <line num="38" count="3" type="stmt"/>
+        <line num="39" count="3" type="stmt"/>
+        <line num="40" count="26" type="stmt"/>
+      </file>
+      <file name="pagos-cobros.store.js" path="C:\projectcynt\ferrotech-frontend\stores\pagos-cobros.store.js">
+        <metrics statements="16" coveredstatements="16" conditionals="2" coveredconditionals="2" methods="17" coveredmethods="17"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="15" count="3" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="17" count="1" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="22" count="1" type="stmt"/>
+        <line num="25" count="1" type="stmt"/>
+        <line num="29" count="2" type="stmt"/>
+        <line num="30" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="34" count="6" type="stmt"/>
+        <line num="37" count="5" type="stmt"/>
+        <line num="40" count="3" type="stmt"/>
+        <line num="41" count="3" type="stmt"/>
+        <line num="42" count="17" type="stmt"/>
+      </file>
+      <file name="pedidos.store.js" path="C:\projectcynt\ferrotech-frontend\stores\pedidos.store.js">
+        <metrics statements="16" coveredstatements="16" conditionals="2" coveredconditionals="2" methods="17" coveredmethods="17"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="14" count="3" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="29" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="33" count="6" type="stmt"/>
+        <line num="36" count="5" type="stmt"/>
+        <line num="39" count="3" type="stmt"/>
+        <line num="40" count="3" type="stmt"/>
+        <line num="41" count="17" type="stmt"/>
+      </file>
+      <file name="productos.store.js" path="C:\projectcynt\ferrotech-frontend\stores\productos.store.js">
+        <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="16" coveredmethods="16"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="19" count="3" type="stmt"/>
+        <line num="20" count="1" type="stmt"/>
+        <line num="22" count="1" type="stmt"/>
+        <line num="25" count="1" type="stmt"/>
+        <line num="29" count="2" type="stmt"/>
+        <line num="30" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="34" count="6" type="stmt"/>
+        <line num="37" count="5" type="stmt"/>
+        <line num="40" count="3" type="stmt"/>
+        <line num="41" count="3" type="stmt"/>
+        <line num="42" count="17" type="stmt"/>
+      </file>
+      <file name="proveedores.store.js" path="C:\projectcynt\ferrotech-frontend\stores\proveedores.store.js">
+        <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="16" coveredmethods="16"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="13" count="3" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="23" count="2" type="stmt"/>
+        <line num="24" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="6" type="stmt"/>
+        <line num="31" count="5" type="stmt"/>
+        <line num="34" count="3" type="stmt"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="36" count="17" type="stmt"/>
+      </file>
+      <file name="usuarios.store.js" path="C:\projectcynt\ferrotech-frontend\stores\usuarios.store.js">
+        <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="16" coveredmethods="16"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="12" count="3" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="22" count="2" type="stmt"/>
+        <line num="23" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="27" count="6" type="stmt"/>
+        <line num="30" count="5" type="stmt"/>
+        <line num="33" count="3" type="stmt"/>
+        <line num="34" count="3" type="stmt"/>
+        <line num="35" count="25" type="stmt"/>
+      </file>
+      <file name="ventas.store.js" path="C:\projectcynt\ferrotech-frontend\stores\ventas.store.js">
+        <metrics statements="16" coveredstatements="16" conditionals="2" coveredconditionals="2" methods="17" coveredmethods="17"/>
+        <line num="3" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="14" count="3" type="stmt"/>
+        <line num="15" count="1" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
+        <line num="19" count="1" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="29" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="33" count="6" type="stmt"/>
+        <line num="36" count="5" type="stmt"/>
+        <line num="39" count="3" type="stmt"/>
+        <line num="40" count="3" type="stmt"/>
+        <line num="41" count="17" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>

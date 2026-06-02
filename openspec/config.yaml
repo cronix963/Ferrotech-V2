@@ -1,0 +1,64 @@
+# openspec/config.yaml
+schema: spec-driven
+version: 1
+
+context: |
+  Ferrotech — Sistema de Gestión Integral para Ferretería.
+  Next.js 14 (pages router) + React 18 SPA with 3 roles (admin, cliente, vendedor).
+  All data hardcoded in component arrays. Auth via localStorage with hardcoded
+  password 'ferrotech2026'. No backend, no state management, no TypeScript.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - State scope clearly: which role(s) and view(s) are affected
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Tag scenarios with role (admin/cliente/vendedor)
+  design:
+    - Include component tree for new views
+    - Document data flow when moving from hardcoded to dynamic
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing JS patterns (no TS conversion without explicit request)
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: false
+  detected: 2026-06-02
+  runner:
+    available: false
+    command: ""
+    framework: ""
+  layers:
+    unit: false
+    integration: false
+    e2e: false
+  coverage:
+    available: false
+    command: ""
+  quality:
+    linter: false
+    type_checker: false
+    formatter: false
+
+stack:
+  framework: next
+  version: "14.2.0"
+  language: javascript
+  router: pages
+  css: single-file (globals.css, 1367 lines)
+  auth: localStorage (hardcoded password)
+  data: hardcoded arrays
+  state: react useState only
+  icons: react-icons (Feather)
