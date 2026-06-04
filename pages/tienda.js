@@ -18,6 +18,7 @@ export default function Tienda() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [orderDone, setOrderDone] = useState(false);
   const [lastOrder, setLastOrder] = useState(null);
+  const [detailProd, setDetailProd] = useState(null);
   const [form, setForm] = useState({ nombre:'', email:'', direccion:'', metodo:'Efectivo' });
   const [submitting, setSubmitting] = useState(false);
 
@@ -30,7 +31,8 @@ export default function Tienda() {
       cat: p.categoria,
       price: p.precio,
       stock: p.stock,
-      icon: '📦',
+      icon: p.icono || '📦',
+      desc: p.descripcion || '',
     }));
   const categories = ['Todas', ...new Set(products.map((p) => p.cat))];
 
@@ -183,7 +185,7 @@ export default function Tienda() {
         {filtered.length === 0 ? (
           <div className="col-span-full text-center py-16 text-gray-400">No se encontraron productos 😕</div>
         ) : filtered.map(p => (
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 flex flex-col hover:shadow-lg hover:-translate-y-0.5 hover:border-primary-100" key={p.id}>
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 flex flex-col hover:shadow-lg hover:-translate-y-0.5 hover:border-primary-100 cursor-pointer" key={p.id} onClick={() => setDetailProd(p)}>
             <div className="h-[140px] bg-gray-50 flex items-center justify-center text-4xl border-b border-gray-100">{p.icon}</div>
             <div className="px-4 pb-4 pt-3.5 flex-1 flex flex-col">
               <span className="text-[0.6rem] uppercase tracking-wide text-primary-light font-semibold mb-0.5">{p.cat}</span>
@@ -309,6 +311,31 @@ export default function Tienda() {
                 Confirmar Pedido
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PRODUCT DETAIL MODAL */}
+      {detailProd && (
+        <div className="fixed inset-0 bg-black/50 z-[300] flex items-center justify-center p-5" onClick={() => setDetailProd(null)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+            <div className="text-5xl text-center mb-4">{detailProd.icon}</div>
+            <h3 className="text-lg font-bold text-gray-800 text-center">{detailProd.name}</h3>
+            <span className="text-[0.65rem] uppercase tracking-wide text-primary-light font-semibold block text-center mb-2">{detailProd.cat}</span>
+            <div className="text-2xl font-bold text-primary text-center mb-3">Bs{detailProd.price.toFixed(2)}</div>
+            <div className={`text-center text-sm mb-4 ${detailProd.stock > 10 ? 'text-success' : detailProd.stock > 0 ? 'text-warning' : 'text-danger'}`}>
+              {detailProd.stock > 10 ? '✔ En stock' : detailProd.stock > 0 ? `⚠ Solo ${detailProd.stock} uds` : '✗ Sin stock'}
+            </div>
+            {detailProd.desc && (
+              <p className="text-sm text-gray-600 mb-4 text-center">{detailProd.desc}</p>
+            )}
+            <button className="w-full py-3 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-light transition-all"
+              onClick={() => { addToCart(detailProd); setDetailProd(null) }}
+              disabled={detailProd.stock === 0}>
+              {detailProd.stock === 0 ? 'Sin stock' : 'Agregar al carrito'}
+            </button>
+            <button className="w-full mt-2 py-2 text-gray-500 text-xs hover:text-gray-700"
+              onClick={() => setDetailProd(null)}>Cerrar</button>
           </div>
         </div>
       )}

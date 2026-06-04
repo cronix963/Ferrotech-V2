@@ -97,6 +97,7 @@ export default function Vendedor() {
     pago: 'Efectivo',
   });
   const [prodSearch, setProdSearch] = useState('');
+  const [montoRecibido, setMontoRecibido] = useState('');
   const [confirmMsg, setConfirmMsg] = useState(null);
 
   /* ── Fetch all data from PocketBase ── */
@@ -243,6 +244,7 @@ export default function Vendedor() {
       setVentaOpen(false);
       setNewSale({ customerId: null, customerName: '', items: [], pago: 'Efectivo' });
       setProdSearch('');
+      setMontoRecibido('');
       setConfirmMsg({ type: 'success', text: `✅ Venta ${orderCode} registrada` });
     } catch (err) {
       setConfirmMsg({ type: 'warn', text: `❌ Error al registrar venta` });
@@ -677,6 +679,7 @@ export default function Vendedor() {
                   setVentaOpen(false);
                   setNewSale({ customerId: null, customerName: '', items: [], pago: 'Efectivo' });
                   setProdSearch('');
+                  setMontoRecibido('');
                 }}
               >
                 <FiX size={16} />
@@ -827,6 +830,26 @@ export default function Vendedor() {
                   <span className="text-2xl font-bold text-primary">Bs{saleTotal.toFixed(2)}</span>
                 </div>
               </div>
+
+              {/* Change calculation for Efectivo */}
+              {newSale.pago === 'Efectivo' && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">💰 MONTO RECIBIDO</label>
+                  <input type="number" step="0.01" min="0" placeholder="0.00"
+                    value={montoRecibido}
+                    onChange={e => setMontoRecibido(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-blue-200 rounded-lg text-lg font-bold text-gray-700 outline-none focus:border-primary-light bg-white" />
+                  {parseFloat(montoRecibido) >= saleTotal && (
+                    <div className="mt-3 flex justify-between items-center bg-white rounded-lg p-3 border border-blue-100">
+                      <span className="text-sm text-gray-600">Vuelto</span>
+                      <span className="text-xl font-bold text-success">Bs{(parseFloat(montoRecibido) - saleTotal).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {montoRecibido && parseFloat(montoRecibido) < saleTotal && (
+                    <p className="text-xs text-danger mt-1">Faltan Bs{(saleTotal - parseFloat(montoRecibido)).toFixed(2)}</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -837,13 +860,14 @@ export default function Vendedor() {
                   setVentaOpen(false);
                   setNewSale({ customerId: null, customerName: '', items: [], pago: 'Efectivo' });
                   setProdSearch('');
+                  setMontoRecibido('');
                 }}
               >
                 Cancelar
               </button>
               <button
                 className="px-5 py-2.5 rounded-lg text-sm font-semibold cursor-pointer bg-accent text-white border-0 hover:brightness-110 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!newSale.customerName || newSale.items.length === 0}
+                disabled={!newSale.customerName || newSale.items.length === 0 || (newSale.pago === 'Efectivo' && (!montoRecibido || parseFloat(montoRecibido) < saleTotal))}
                 onClick={confirmNewSale}
               >
                 <FiCheck /> Confirmar Venta
