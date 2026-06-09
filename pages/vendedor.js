@@ -34,17 +34,23 @@ const mapCustomer = (r) => ({
 });
 
 const mapOrder = (r) => {
-  const itemCount = Array.isArray(r.items) ? r.items.length : (r.items ?? 0);
+  // Parse JSONB items
+  let itemsList = [];
+  if (Array.isArray(r.items)) itemsList = r.items;
+  else if (typeof r.items === 'string') try { itemsList = JSON.parse(r.items); } catch { itemsList = []; }
+  const itemCount = itemsList.reduce((sum, i) => sum + (i.cantidad || i.qty || 1), 0);
+
   return {
-    id: r.codigo || r.id.slice(0, 8).toUpperCase(),
+    id: r.codigo || `#${r.id}`,
     customer: r.cliente || '',
-    fecha: formatDate(r.created || r.fecha),
+    fecha: formatDate(r.created_at || r.fecha),
     items: itemCount,
-    total: formatPrice(r.total ?? 0),
+    total: formatPrice(parseFloat(r.total) || 0),
     pago: r.pago || 'Pendiente',
     estado: r.estado || 'Pendiente',
     _pbId: r.id,
-    _totalRaw: r.total ?? 0,
+    _totalRaw: parseFloat(r.total) || 0,
+    _items: itemsList,
   };
 };
 
@@ -52,8 +58,8 @@ const mapProduct = (r) => ({
   id: r.id,
   name: r.nombre || '',
   cat: r.categoria || '',
-  price: r.precio ?? 0,
-  icon: '📦',
+  price: parseFloat(r.precio) || 0,
+  icon: r.icono || '📦',
 });
 
 const badge = (s) =>

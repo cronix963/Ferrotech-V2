@@ -113,9 +113,11 @@ export default function Tienda() {
             precio: i.price,
           })),
           total: cartTotal,
+          subtotal: cartTotal,
           tipo: 'tienda',
           estado: 'Pendiente',
-          pago: form.metodo,
+          pago: 'Pendiente',
+          metodo_pago: form.metodo,
           creado_por: user?.id,
         }),
       });
