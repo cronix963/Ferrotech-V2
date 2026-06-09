@@ -1,17 +1,18 @@
 import { create } from 'zustand';
-import pb from '../lib/pocketbase';
 
 const searchableFields = ['pedido', 'cliente', 'repartidor'];
 
-const mapRecord = (pbRecord) => ({
-  id: pbRecord.id,
-  pedido: pbRecord.pedido || '',
-  cliente: pbRecord.cliente || '',
-  direccion: pbRecord.direccion || '',
-  repartidor: pbRecord.repartidor || '',
-  fecha_env: pbRecord.fecha_env || '',
-  estado: pbRecord.estado || 'Pendiente',
+const mapRecord = (record) => ({
+  id: record.id,
+  pedido: record.pedido || '',
+  cliente: record.cliente || '',
+  direccion: record.direccion || '',
+  repartidor: record.repartidor || '',
+  fecha_env: record.fecha_env || '',
+  estado: record.estado || 'Pendiente',
 });
+
+const API_ENDPOINT = '/api/envios';
 
 export const useEnviosStore = create((set, get) => ({
   items: [],
@@ -21,8 +22,9 @@ export const useEnviosStore = create((set, get) => ({
   fetchAll: async () => {
     set({ loading: true, error: null });
     try {
-      const result = await pb.collection('envios').getList(1, 200, { sort: '-created' });
-      set({ items: result.items.map(mapRecord), loading: false });
+      const res = await fetch(`${API_ENDPOINT}?page=1&limit=200&sort=-created_at`);
+      const json = await res.json();
+      set({ items: json.data.map(mapRecord), loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -31,8 +33,13 @@ export const useEnviosStore = create((set, get) => ({
   addItem: async (data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('envios').create(data);
-      set((s) => ({ items: [...s.items, mapRecord(record)], loading: false }));
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      set((s) => ({ items: [...s.items, mapRecord(json.data)], loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -41,9 +48,14 @@ export const useEnviosStore = create((set, get) => ({
   updateItem: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('envios').update(id, data);
+      const res = await fetch(`${API_ENDPOINT}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
       set((s) => ({
-        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(record) } : i)),
+        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(json.data) } : i)),
         loading: false,
       }));
     } catch (err) {
@@ -54,7 +66,7 @@ export const useEnviosStore = create((set, get) => ({
   removeItem: async (id) => {
     set({ loading: true, error: null });
     try {
-      await pb.collection('envios').delete(id);
+      await fetch(`${API_ENDPOINT}/${id}`, { method: 'DELETE' });
       set((s) => ({ items: s.items.filter((i) => i.id !== id), loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });

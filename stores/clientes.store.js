@@ -1,17 +1,18 @@
 import { create } from 'zustand';
-import pb from '../lib/pocketbase';
 
 const searchableFields = ['nombre', 'contacto', 'tipo'];
 
-const mapRecord = (pbRecord) => ({
-  id: pbRecord.id,
-  nombre: pbRecord.nombre || '',
-  contacto: pbRecord.nombre || '', // map nombre to contacto as fallback
-  tel: pbRecord.telefono || '',
-  email: pbRecord.email || '',
-  tipo: pbRecord.tipo || 'Particular',
-  estado: 'Activo', // not in PB spec, defaulted per design decision
+const mapRecord = (record) => ({
+  id: record.id,
+  nombre: record.nombre || '',
+  contacto: record.nombre || '',
+  tel: record.telefono || '',
+  email: record.email || '',
+  tipo: record.tipo || 'Particular',
+  estado: 'Activo',
 });
+
+const API_ENDPOINT = '/api/clientes';
 
 export const useClientesStore = create((set, get) => ({
   items: [],
@@ -21,8 +22,9 @@ export const useClientesStore = create((set, get) => ({
   fetchAll: async () => {
     set({ loading: true, error: null });
     try {
-      const result = await pb.collection('clientes').getList(1, 200, { sort: '-created' });
-      set({ items: result.items.map(mapRecord), loading: false });
+      const res = await fetch(`${API_ENDPOINT}?page=1&limit=200&sort=-created_at`);
+      const json = await res.json();
+      set({ items: json.data.map(mapRecord), loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -31,8 +33,13 @@ export const useClientesStore = create((set, get) => ({
   addItem: async (data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('clientes').create(data);
-      set((s) => ({ items: [...s.items, mapRecord(record)], loading: false }));
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      set((s) => ({ items: [...s.items, mapRecord(json.data)], loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -41,9 +48,14 @@ export const useClientesStore = create((set, get) => ({
   updateItem: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('clientes').update(id, data);
+      const res = await fetch(`${API_ENDPOINT}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
       set((s) => ({
-        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(record) } : i)),
+        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(json.data) } : i)),
         loading: false,
       }));
     } catch (err) {
@@ -54,7 +66,7 @@ export const useClientesStore = create((set, get) => ({
   removeItem: async (id) => {
     set({ loading: true, error: null });
     try {
-      await pb.collection('clientes').delete(id);
+      await fetch(`${API_ENDPOINT}/${id}`, { method: 'DELETE' });
       set((s) => ({ items: s.items.filter((i) => i.id !== id), loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });

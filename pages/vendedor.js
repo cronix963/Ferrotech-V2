@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '../stores/auth.store';
-import pb from '../lib/pocketbase';
 import { formatPrice } from '../lib/price';
 import {
   FiUsers,
@@ -104,13 +103,13 @@ export default function Vendedor() {
   const fetchData = async () => {
     try {
       const [clientesRes, pedidosRes, productosRes] = await Promise.all([
-        pb.collection('clientes').getList(1, 200, { sort: '-created' }),
-        pb.collection('pedidos').getList(1, 200, { sort: '-created' }),
-        pb.collection('productos').getList(1, 200, { sort: '-created', filter: 'activo = true' }),
+        fetch('/api/clientes?limit=200&sort=-created_at').then(r => r.json()),
+        fetch('/api/pedidos?limit=200&sort=-created_at').then(r => r.json()),
+        fetch('/api/productos?limit=200&sort=-created_at&activo=true').then(r => r.json()),
       ]);
-      setCustomers(clientesRes.items.map(mapCustomer));
-      setOrders(pedidosRes.items.map(mapOrder));
-      setProducts(productosRes.items.map(mapProduct));
+      setCustomers((clientesRes.data || []).map(mapCustomer));
+      setOrders((pedidosRes.data || []).map(mapOrder));
+      setProducts((productosRes.data || []).map(mapProduct));
     } catch (err) {
       console.error('Failed to load data:', err);
     }
@@ -134,7 +133,11 @@ export default function Vendedor() {
     const order = orders.find((o) => o.id === orderId);
     if (!order) return;
     try {
-      await pb.collection('pedidos').update(order._pbId, { estado: 'Completado', pago: 'Pagado' });
+      await fetch(`/api/pedidos/${order._pbId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'Completado', pago: 'Pagado' }),
+      });
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, estado: 'Completado', pago: 'Pagado' } : o)),
       );
@@ -150,7 +153,11 @@ export default function Vendedor() {
     const order = orders.find((o) => o.id === orderId);
     if (!order) return;
     try {
-      await pb.collection('pedidos').update(order._pbId, { estado: 'Despachado' });
+      await fetch(`/api/pedidos/${order._pbId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'Despachado' }),
+      });
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, estado: 'Despachado' } : o)),
       );
@@ -167,7 +174,11 @@ export default function Vendedor() {
     const order = orders.find((o) => o.id === orderId);
     if (!order) return;
     try {
-      await pb.collection('pedidos').update(order._pbId, { estado: 'Cancelado', pago: 'Pendiente' });
+      await fetch(`/api/pedidos/${order._pbId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'Cancelado', pago: 'Pendiente' }),
+      });
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, estado: 'Cancelado', pago: 'Pendiente' } : o)),
       );
@@ -216,26 +227,34 @@ export default function Vendedor() {
     const isCash = newSale.pago === 'Efectivo';
 
     try {
-      await pb.collection('pedidos').create({
-        codigo: orderCode,
-        cliente: newSale.customerName,
-        items: newSale.items.map((i) => ({
-          producto_id: i.id,
-          nombre: i.name,
-          cantidad: i.qty,
-          precio: i.price,
-        })),
-        total: saleTotal,
-        tipo: 'pos',
-        estado: isCash ? 'Completado' : 'Pendiente',
-        pago: isCash ? 'Pagado' : 'Pendiente',
-        creadoPor: user?.id,
+      await fetch('/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          codigo: orderCode,
+          cliente: newSale.customerName,
+          items: newSale.items.map((i) => ({
+            producto_id: i.id,
+            nombre: i.name,
+            cantidad: i.qty,
+            precio: i.price,
+          })),
+          total: saleTotal,
+          tipo: 'pos',
+          estado: isCash ? 'Completado' : 'Pendiente',
+          pago: isCash ? 'Pagado' : 'Pendiente',
+          creado_por: user?.id,
+        }),
       });
 
       // Create or update customer
       const existingCustomer = customers.find((c) => c.name === newSale.customerName);
       if (!existingCustomer) {
-        await pb.collection('clientes').create({ nombre: newSale.customerName });
+        await fetch('/api/clientes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre: newSale.customerName }),
+        });
       }
 
       // Refresh data

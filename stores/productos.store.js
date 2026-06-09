@@ -1,31 +1,32 @@
 import { create } from 'zustand';
-import pb from '../lib/pocketbase';
 
 const searchableFields = ['nombre', 'categoria'];
 
-const mapRecord = (pbRecord) => {
-  const stock = pbRecord.stock ?? 0;
-  const min = 0; // not in PB spec, defaulted per design decision
+const mapRecord = (record) => {
+  const stock = record.stock ?? 0;
+  const min = 0;
   let estado;
   if (stock === 0) {
     estado = 'Sin Stock';
   } else if (stock <= min) {
     estado = 'Stock Bajo';
   } else {
-    estado = pbRecord.activo !== false ? 'Disponible' : 'Inactivo';
+    estado = record.activo !== false ? 'Disponible' : 'Inactivo';
   }
 
   return {
-    id: pbRecord.id,
-    nombre: pbRecord.nombre || '',
-    categoria: pbRecord.categoria || '',
+    id: record.id,
+    nombre: record.nombre || '',
+    categoria: record.categoria || '',
     stock,
     min,
-    precio: pbRecord.precio ?? 0,
-    unidad: 'unidad', // default, not stored in PB
+    precio: record.precio ?? 0,
+    unidad: 'unidad',
     estado,
   };
 };
+
+const API_ENDPOINT = '/api/productos';
 
 export const useProductosStore = create((set, get) => ({
   items: [],
@@ -35,8 +36,9 @@ export const useProductosStore = create((set, get) => ({
   fetchAll: async () => {
     set({ loading: true, error: null });
     try {
-      const result = await pb.collection('productos').getList(1, 200, { sort: '-created' });
-      set({ items: result.items.map(mapRecord), loading: false });
+      const res = await fetch(`${API_ENDPOINT}?page=1&limit=200&sort=-created_at`);
+      const json = await res.json();
+      set({ items: json.data.map(mapRecord), loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -45,8 +47,13 @@ export const useProductosStore = create((set, get) => ({
   addItem: async (data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('productos').create(data);
-      set((s) => ({ items: [...s.items, mapRecord(record)], loading: false }));
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      set((s) => ({ items: [...s.items, mapRecord(json.data)], loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -55,9 +62,14 @@ export const useProductosStore = create((set, get) => ({
   updateItem: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('productos').update(id, data);
+      const res = await fetch(`${API_ENDPOINT}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
       set((s) => ({
-        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(record) } : i)),
+        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(json.data) } : i)),
         loading: false,
       }));
     } catch (err) {
@@ -68,7 +80,7 @@ export const useProductosStore = create((set, get) => ({
   removeItem: async (id) => {
     set({ loading: true, error: null });
     try {
-      await pb.collection('productos').delete(id);
+      await fetch(`${API_ENDPOINT}/${id}`, { method: 'DELETE' });
       set((s) => ({ items: s.items.filter((i) => i.id !== id), loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });

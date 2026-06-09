@@ -2,7 +2,7 @@ import { FiLogOut } from 'react-icons/fi';
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react'
 import { useAuthStore } from '../stores/auth.store';
-import pb from '../lib/pocketbase'
+
 
 export default function Header() {
   const router = useRouter();
@@ -47,12 +47,16 @@ export default function Header() {
             if (e.target.value.length >= 2) {
               debounceRef.current = setTimeout(async () => {
                 try {
-                  const [prod, cli, ped] = await Promise.all([
-                    pb.collection('productos').getList(1, 5, { filter: `nombre ~ "${e.target.value}"` }),
-                    pb.collection('clientes').getList(1, 5, { filter: `nombre ~ "${e.target.value}"` }),
-                    pb.collection('pedidos').getList(1, 5, { filter: `cliente ~ "${e.target.value}" || codigo ~ "${e.target.value}"` }),
+                  const q = encodeURIComponent(e.target.value)
+                  const [prodRes, cliRes, pedRes] = await Promise.all([
+                    fetch(`/api/productos?search=${q}&limit=5`),
+                    fetch(`/api/clientes?search=${q}&limit=5`),
+                    fetch(`/api/pedidos?search=${q}&limit=5`),
                   ])
-                  setSearchResults({ productos: prod.items, clientes: cli.items, pedidos: ped.items })
+                  const prod = await prodRes.json()
+                  const cli = await cliRes.json()
+                  const ped = await pedRes.json()
+                  setSearchResults({ productos: prod.data || [], clientes: cli.data || [], pedidos: ped.data || [] })
                   setSearchOpen(true)
                 } catch { /* ignore */ }
               }, 300)

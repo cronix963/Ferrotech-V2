@@ -1,17 +1,18 @@
 import { create } from 'zustand';
-import pb from '../lib/pocketbase';
 
 const searchableFields = ['id', 'cliente'];
 
-const mapRecord = (pbRecord) => ({
-  id: pbRecord.id,
-  cliente: pbRecord.cliente || '',
-  fecha: pbRecord.fecha || '',
-  total: pbRecord.total ?? 0,
-  items: pbRecord.items ?? 0,
-  pago: pbRecord.pago || 'Pendiente',
-  envio: pbRecord.envio || '',
+const mapRecord = (record) => ({
+  id: record.id,
+  cliente: record.cliente || '',
+  fecha: record.fecha || '',
+  total: record.total ?? 0,
+  items: record.items ?? 0,
+  pago: record.pago || 'Pendiente',
+  envio: record.envio || '',
 });
+
+const API_ENDPOINT = '/api/pedidos';
 
 export const usePedidosStore = create((set, get) => ({
   items: [],
@@ -21,8 +22,9 @@ export const usePedidosStore = create((set, get) => ({
   fetchAll: async () => {
     set({ loading: true, error: null });
     try {
-      const result = await pb.collection('pedidos').getList(1, 200, { sort: '-created' });
-      set({ items: result.items.map(mapRecord), loading: false });
+      const res = await fetch(`${API_ENDPOINT}?page=1&limit=200&sort=-created_at`);
+      const json = await res.json();
+      set({ items: json.data.map(mapRecord), loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -31,8 +33,13 @@ export const usePedidosStore = create((set, get) => ({
   addItem: async (data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('pedidos').create(data);
-      set((s) => ({ items: [...s.items, mapRecord(record)], loading: false }));
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      set((s) => ({ items: [...s.items, mapRecord(json.data)], loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -41,9 +48,14 @@ export const usePedidosStore = create((set, get) => ({
   updateItem: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('pedidos').update(id, data);
+      const res = await fetch(`${API_ENDPOINT}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
       set((s) => ({
-        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(record) } : i)),
+        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(json.data) } : i)),
         loading: false,
       }));
     } catch (err) {
@@ -54,7 +66,7 @@ export const usePedidosStore = create((set, get) => ({
   removeItem: async (id) => {
     set({ loading: true, error: null });
     try {
-      await pb.collection('pedidos').delete(id);
+      await fetch(`${API_ENDPOINT}/${id}`, { method: 'DELETE' });
       set((s) => ({ items: s.items.filter((i) => i.id !== id), loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });

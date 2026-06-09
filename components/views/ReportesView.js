@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { FiBarChart2, FiTrendingUp, FiUsers, FiDollarSign, FiPackage, FiShoppingCart } from 'react-icons/fi';
-import pb from '../../lib/pocketbase';
 import { formatPrice } from '../../lib/price';
 
 const timeAgo = (iso) => {
@@ -34,24 +33,18 @@ export default function ReportesView() {
 
         // Fetch counts and data in parallel
         const [ventasRes, pedidosRes, clientesRes, productosRes, recentPedidos] = await Promise.all([
-          pb.collection('ventas').getList(1, 200, {
-            sort: '-created',
-            filter: `created >= "${since}"`,
-          }),
-          pb.collection('pedidos').getList(1, 1, { skipTotal: false }),
-          pb.collection('clientes').getList(1, 1, { skipTotal: false }),
-          pb.collection('productos').getList(1, 1, { skipTotal: false }),
-          pb.collection('pedidos').getList(1, 8, {
-            sort: '-created',
-            expand: 'items',
-          }),
+          fetch('/api/ventas?limit=200&sort=-created_at').then(r => r.json()),
+          fetch('/api/pedidos?limit=1').then(r => r.json()),
+          fetch('/api/clientes?limit=1').then(r => r.json()),
+          fetch('/api/productos?limit=1').then(r => r.json()),
+          fetch('/api/pedidos?limit=8&sort=-created_at').then(r => r.json()),
         ]);
 
-        const ventasMes = ventasRes.items;
-        const totalVentas = ventasMes.reduce((s, v) => s + (v.total ?? 0), 0);
-        const pedidosCount = pedidosRes.totalItems;
-        const clientesCount = clientesRes.totalItems;
-        const productosCount = productosRes.totalItems;
+        const ventasMes = ventasRes.data || [];
+        const totalVentas = ventasMes.reduce((s, v) => s + (parseFloat(v.total) || 0), 0);
+        const pedidosCount = pedidosRes.total || 0;
+        const clientesCount = clientesRes.total || 0;
+        const productosCount = productosRes.total || 0;
 
         setStats([
           {
@@ -85,9 +78,9 @@ export default function ReportesView() {
           {
             label: 'Ingresos por Cobrar',
             value: formatPrice(
-              recentPedidos.items
+              (recentPedidos.data || [])
                 .filter((p) => p.estado !== 'Cancelado' && p.pago !== 'Pagado')
-                .reduce((s, p) => s + (p.total ?? 0), 0),
+                .reduce((s, p) => s + (parseFloat(p.total) || 0), 0),
             ),
             change: '-3%',
             icon: FiDollarSign,
@@ -96,10 +89,10 @@ export default function ReportesView() {
         ]);
 
         // Build recent activity from recent pedidos
-        const activity = recentPedidos.items.map((p) => ({
-          action: `Nuevo pedido ${p.codigo || p.id.slice(0, 8).toUpperCase()}`,
-          detail: `${p.cliente || '—'} — ${formatPrice(p.total ?? 0)}`,
-          time: timeAgo(p.created),
+        const activity = (recentPedidos.data || []).map((p) => ({
+          action: `Nuevo pedido ${p.codigo || String(p.id).slice(0, 8).toUpperCase()}`,
+          detail: `${p.cliente || '—'} — ${formatPrice(parseFloat(p.total) || 0)}`,
+          time: timeAgo(p.created_at),
         }));
         setRecentActivity(activity);
       } catch (err) {

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '../stores/auth.store';
 import { useProductosStore } from '../stores/productos.store';
-import pb from '../lib/pocketbase';
 import { FiSearch, FiShoppingCart, FiX, FiPlus, FiMinus, FiCheck } from 'react-icons/fi';
 
 export default function Tienda() {
@@ -104,22 +103,26 @@ export default function Tienda() {
     const orderCode = '#P-' + Date.now().toString(36).toUpperCase();
     setSubmitting(true);
     try {
-      await pb.collection('pedidos').create({
-        codigo: orderCode,
-        cliente: form.nombre,
-        email: form.email,
-        direccion: form.direccion,
-        items: cart.map((i) => ({
-          producto_id: i.id,
-          nombre: i.name,
-          cantidad: i.qty,
-          precio: i.price,
-        })),
-        total: cartTotal,
-        tipo: 'tienda',
-        estado: 'Pendiente',
-        pago: form.metodo,
-        creadoPor: user?.id,
+      await fetch('/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          codigo: orderCode,
+          cliente: form.nombre,
+          email: form.email,
+          direccion: form.direccion,
+          items: cart.map((i) => ({
+            producto_id: i.id,
+            nombre: i.name,
+            cantidad: i.qty,
+            precio: i.price,
+          })),
+          total: cartTotal,
+          tipo: 'tienda',
+          estado: 'Pendiente',
+          pago: form.metodo,
+          creado_por: user?.id,
+        }),
       });
 
       setLastOrder({ num: orderCode, total: cartTotal, items: [...cart] });

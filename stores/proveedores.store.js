@@ -1,17 +1,18 @@
 import { create } from 'zustand';
-import pb from '../lib/pocketbase';
 
 const searchableFields = ['nombre', 'rubro'];
 
-const mapRecord = (pbRecord) => ({
-  id: pbRecord.id,
-  nombre: pbRecord.nombre || '',
-  contacto: pbRecord.contacto || '',
-  tel: pbRecord.telefono || '',
-  email: pbRecord.email || '',
-  rubro: pbRecord.rubro || '',
-  estado: pbRecord.estado || 'Activo', // not in PB spec, defaulted per design decision
+const mapRecord = (record) => ({
+  id: record.id,
+  nombre: record.nombre || '',
+  contacto: record.contacto || '',
+  tel: record.telefono || '',
+  email: record.email || '',
+  rubro: record.rubro || '',
+  estado: record.estado || 'Activo',
 });
+
+const API_ENDPOINT = '/api/proveedores';
 
 export const useProveedoresStore = create((set, get) => ({
   items: [],
@@ -21,8 +22,9 @@ export const useProveedoresStore = create((set, get) => ({
   fetchAll: async () => {
     set({ loading: true, error: null });
     try {
-      const result = await pb.collection('proveedores').getList(1, 200, { sort: '-created' });
-      set({ items: result.items.map(mapRecord), loading: false });
+      const res = await fetch(`${API_ENDPOINT}?page=1&limit=200&sort=-created_at`);
+      const json = await res.json();
+      set({ items: json.data.map(mapRecord), loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -31,8 +33,13 @@ export const useProveedoresStore = create((set, get) => ({
   addItem: async (data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('proveedores').create(data);
-      set((s) => ({ items: [...s.items, mapRecord(record)], loading: false }));
+      const res = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      set((s) => ({ items: [...s.items, mapRecord(json.data)], loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -41,9 +48,14 @@ export const useProveedoresStore = create((set, get) => ({
   updateItem: async (id, data) => {
     set({ loading: true, error: null });
     try {
-      const record = await pb.collection('proveedores').update(id, data);
+      const res = await fetch(`${API_ENDPOINT}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
       set((s) => ({
-        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(record) } : i)),
+        items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(json.data) } : i)),
         loading: false,
       }));
     } catch (err) {
@@ -54,7 +66,7 @@ export const useProveedoresStore = create((set, get) => ({
   removeItem: async (id) => {
     set({ loading: true, error: null });
     try {
-      await pb.collection('proveedores').delete(id);
+      await fetch(`${API_ENDPOINT}/${id}`, { method: 'DELETE' });
       set((s) => ({ items: s.items.filter((i) => i.id !== id), loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });

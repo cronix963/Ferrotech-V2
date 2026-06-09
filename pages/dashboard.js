@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '../stores/auth.store';
-import pb from '../lib/pocketbase';
 import Header from '@/components/Header';
 import SidebarLeft from '@/components/SidebarLeft';
 import SidebarRight from '@/components/SidebarRight';
@@ -51,19 +50,16 @@ export default function Dashboard() {
     }
   }, [hydrating, isAuthenticated, rol, router]);
 
-  // Fetch real counts from PB when authenticated
+  // Fetch real counts from API when authenticated
   useEffect(() => {
     if (!hydrating && isAuthenticated && rol === 'admin') {
-      Promise.all([
-        pb.collection('users').getList(1, 1),
-        pb.collection('productos').getList(1, 1),
-        pb.collection('clientes').getList(1, 1),
-      ])
-        .then(([users, productos, clientes]) => {
+      fetch('/api/reportes/dashboard')
+        .then((res) => res.json())
+        .then((json) => {
           setStats({
-            usuarios: users.totalItems,
-            productos: productos.totalItems,
-            clientes: clientes.totalItems,
+            usuarios: json.data.usuarios,
+            productos: json.data.productos,
+            clientes: json.data.clientes,
           });
           setStatsLoading(false);
         })
