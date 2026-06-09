@@ -1,72 +1,82 @@
 import { create } from 'zustand';
-import pb from '../lib/pocketbase';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
-export const useAuthStore = create((set, get) => ({
-  token: null,
+export const useAuthStore = create((set) => ({
   user: null,
   rol: null,
   isAuthenticated: false,
   loading: false,
   error: null,
-  hydrating: true,
 
-  set: (authData) => {
-    // Handle both { record, token } from authWithPassword
-    // and direct record from authRefresh / manual call
-    const record = authData.record || authData;
-    const rol = record.rol || 'cliente';
-    set({
-      token: pb.authStore.token,
-      user: record,
-      rol,
-      isAuthenticated: true,
-      loading: false,
-      error: null,
-    });
-  },
+  setUser: (user) => set({
+    user,
+    rol: user?.rol || null,
+    isAuthenticated: !!user,
+    loading: false,
+  }),
 
-  reset: () => {
-    set({
-      token: null,
-      user: null,
-      rol: null,
-      isAuthenticated: false,
-      loading: false,
-      error: null,
-    });
-  },
-
-  login: async (email, password) => {
+  loginCredentials: async (email, password) => {
     set({ loading: true, error: null });
     try {
-      const authData = await pb.collection('users').authWithPassword(email, password);
-      const record = authData.record;
-      const rol = record.rol || 'cliente';
-      set({
-        token: pb.authStore.token,
-        user: record,
-        rol,
-        isAuthenticated: true,
-        loading: false,
-        error: null,
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
       });
-      return record;
-    } catch (err) {
-      let msg = 'Error de conexión con el servidor';
-      if (err.status === 400) {
-        msg = 'Credenciales inválidas';
+      if (result?.error) {
+        set({ error: result.error, loading: false });
+        return null;
       }
-      set({ error: msg, loading: false });
-      throw err;
+      return true;
+    } catch {
+      set({ error: 'Error de conexión', loading: false });
+      return null;
+    }
+  },
+
+  loginGoogle: async () => {
+    set({ loading: true, error: null });
+    try {
+      await signIn('google', { callbackUrl: '/dashboard' });
+    } catch {
+      set({ error: 'Error con Google', loading: false });
+    }
+  },
+
+  register: async (email, password, nombre) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, nombre }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        set({ error: data.error || 'Error al registrar', loading: false });
+        return false;
+      }
+      // Auto-login after registration
+      const loginResult = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+      if (loginResult?.error) {
+        set({ error: 'Registrado. Ahora ingresá con tus credenciales.', loading: false });
+        return true;
+      }
+      return true;
+    } catch {
+      set({ error: 'Error de conexión', loading: false });
+      return false;
     }
   },
 
   logout: () => {
-    pb.authStore.clear();
-    get().reset();
+    signOut({ redirect: '/' });
+    set({ user: null, rol: null, isAuthenticated: false });
   },
 
   clearError: () => set({ error: null }),
-
-  setHydrated: () => set({ hydrating: false }),
 }));

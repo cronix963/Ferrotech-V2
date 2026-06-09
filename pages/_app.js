@@ -1,24 +1,30 @@
 import '../styles/globals.css';
+import { SessionProvider } from 'next-auth/react';
 import { useEffect } from 'react';
-import pb from '../lib/pocketbase';
+import { useSession } from 'next-auth/react';
 import { useAuthStore } from '../stores/auth.store';
 
-export default function App({ Component, pageProps }) {
-  useEffect(() => {
-    const hydrate = async () => {
-      if (pb.authStore.isValid) {
-        try {
-          const record = await pb.collection('users').authRefresh();
-          useAuthStore.getState().set({ record });
-        } catch {
-          pb.authStore.clear();
-          useAuthStore.getState().reset();
-        }
-      }
-      useAuthStore.getState().setHydrated();
-    };
-    hydrate();
-  }, []);
+function AuthHydrator({ children }) {
+  const { data: session, status } = useSession();
+  const { setUser } = useAuthStore();
 
-  return <Component {...pageProps} />;
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      setUser(session.user);
+    } else if (status === 'unauthenticated') {
+      setUser(null);
+    }
+  }, [session, status, setUser]);
+
+  return children;
+}
+
+export default function App({ Component, pageProps: { session, ...pageProps } }) {
+  return (
+    <SessionProvider session={session}>
+      <AuthHydrator>
+        <Component {...pageProps} />
+      </AuthHydrator>
+    </SessionProvider>
+  );
 }
