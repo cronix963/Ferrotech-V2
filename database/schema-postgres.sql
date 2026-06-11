@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS envios (id SERIAL PRIMARY KEY, pedido_id INTEGER, dir
 CREATE TABLE IF NOT EXISTS cotizaciones (id SERIAL PRIMARY KEY, codigo VARCHAR(50) NOT NULL UNIQUE, cliente_id INTEGER, cliente VARCHAR(255) NOT NULL, items JSONB, subtotal NUMERIC(12,2) NOT NULL DEFAULT 0, impuesto NUMERIC(12,2) NOT NULL DEFAULT 0, total NUMERIC(12,2) NOT NULL DEFAULT 0, estado VARCHAR(50) NOT NULL DEFAULT 'Pendiente', validez_dias INTEGER NOT NULL DEFAULT 30, notas TEXT, creado_por INTEGER, created_at TIMESTAMP NOT NULL DEFAULT NOW(), FOREIGN KEY (cliente_id) REFERENCES clientes(id), FOREIGN KEY (creado_por) REFERENCES users(id));
 CREATE TABLE IF NOT EXISTS pagos_cobros (id SERIAL PRIMARY KEY, tipo VARCHAR(50) NOT NULL, referencia_id INTEGER, referencia_tipo VARCHAR(50), monto NUMERIC(12,2) NOT NULL DEFAULT 0, metodo VARCHAR(50) NOT NULL, concepto VARCHAR(500), registrado_por INTEGER, created_at TIMESTAMP NOT NULL DEFAULT NOW(), FOREIGN KEY (registrado_por) REFERENCES users(id));
 
-INSERT INTO categorias (nombre, descripcion, icono) VALUES ('Materiales de Construcción', 'Cemento, varillas, ladrillos', '🏗️'), ('Ferretería General', 'Clavos, herramientas', '🔧'), ('Electricidad', 'Cables, interruptores', '⚡'), ('Plomería', 'Tuberías PVC', '🚿'), ('Pinturas', 'Látex, acabados', '🎨'), ('Herramientas', 'Herramientas profesionales', '🔨'), ('Seguridad', 'Equipos de protección', '🦺'), ('Jardín', 'Riego, exterior', '🌿') ON CONFLICT DO NOTHING;
+INSERT INTO categorias (nombre, descripcion, icono) VALUES ('Materiales de Construcción', 'Cemento, varillas, ladrillos y materiales para obra', '🏗️'), ('Ferretería General', 'Clavos, herramientas manuales y accesorios', '🔧'), ('Electricidad', 'Cables, interruptores y material eléctrico', '⚡'), ('Plomería', 'Tuberías PVC, conexiones y accesorios sanitarios', '🚿'), ('Pinturas', 'Látex, impermeabilizantes y acabados', '🎨'), ('Herramientas', 'Herramientas manuales y eléctricas profesionales', '🔨'), ('Seguridad', 'Equipos de protección personal y seguridad', '🦺'), ('Jardín', 'Riego, herramientas de jardín y exterior', '🌿') ON CONFLICT DO NOTHING;
 
 INSERT INTO users (email, password_hash, nombre, rol, provider, activo) VALUES ('admin@ferrotech.bo', '$2b$10$dE7kHORurC50Yjfh0NEoFuAH9fKvfn0.8GS/fQoyWxjob2oe.nGUW', 'Administrador', 'admin', 'credentials', TRUE) ON CONFLICT (email) DO NOTHING;
 INSERT INTO users (email, password_hash, nombre, rol, provider, activo) VALUES ('vendedor@ferrotech.bo', '$2b$10$pA3pJJi0Rdq/Fz0Rlx.H7.7x9NImO8wDBtmEM8r25u8FkDrwaISaG', 'Carlos Vendedor', 'vendedor', 'credentials', TRUE) ON CONFLICT (email) DO NOTHING;
@@ -24,41 +24,41 @@ INSERT INTO clientes (nombre, email, telefono, direccion, ciudad, nit, empresa) 
 INSERT INTO proveedores (nombre, contacto, email, telefono, direccion, ciudad) VALUES ('Cemento F', 'Juan Pérez', 'ventas@cementof.bo', '7221111', 'Zona Industrial', 'La Paz'), ('Herramientas Pro', 'María García', 'info@herramientaspro.bo', '7222222', 'Av. Comercial 321', 'Cochabamba'), ('ElectroSuministros', 'Roberto López', 'ventas@electrosum.bo', '7223333', 'Calle Comercio 654', 'Santa Cruz');
 
 INSERT INTO productos (nombre, descripcion, categoria, precio, precio_compra, stock, icono, imagen) VALUES
-('Cemento Portland 50kg', 'Saco de cemento Portland CPN 50kg', 'Materiales de Construcción', 45.00, 35.00, 200, '🏗️', 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop'),
-('Varilla 3/8" (12m)', 'Varilla de acero corrugada 3/8', 'Materiales de Construcción', 28.50, 22.00, 150, '🔩', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop'),
-('Ladrillo Fiscal', 'Ladrillo fiscal 18x18x18cm', 'Materiales de Construcción', 2.80, 2.00, 5000, '🧱', 'https://images.unsplash.com/photo-1558618047-3c8c76ca7e0d?w=400&h=300&fit=crop'),
-('Martillo Stanley 16oz', 'Martillo de uña Stanley', 'Herramientas', 65.00, 48.00, 35, '🔨', 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop'),
-('Taladro Bosch 500W', 'Taladro eléctrico Bosch GSB 500W', 'Herramientas', 450.00, 350.00, 15, '⚡', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&h=300&fit=crop'),
-('Cable THW 2.5mm (100m)', 'Cable eléctrico THW 2.5mm²', 'Electricidad', 180.00, 140.00, 40, '🔌', 'https://images.unsplash.com/photo-1544724107-6d5c4caaff30?w=400&h=300&fit=crop'),
-('Tubo PVC 2" (6m)', 'Tubo PVC sanitario 2"', 'Plomería', 32.00, 25.00, 80, '🚿', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=300&fit=crop'),
-('Pintura Látex 20L', 'Pintura látex interior/exterior', 'Pinturas', 220.00, 175.00, 25, '🎨', 'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=400&h=300&fit=crop'),
-('Clavo 2" (1kg)', 'Clavo de acero galvanizado', 'Ferretería General', 12.00, 9.00, 300, '📌', 'https://images.unsplash.com/photo-1590247813695-6b1aee4a77d8?w=400&h=300&fit=crop'),
+('Cemento Portland 50kg', 'Saco de cemento Portland CPN 50kg de alta resistencia', 'Materiales de Construcción', 45.00, 35.00, 200, '🏗️', 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop'),
+('Varilla 3/8" (12m)', 'Varilla de acero corrugada 3/8 pulgadas, largo 12 metros', 'Materiales de Construcción', 28.50, 22.00, 150, '🔩', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop'),
+('Ladrillo Fiscal', 'Ladrillo fiscal 18x18x18cm, alta resistencia', 'Materiales de Construcción', 2.80, 2.00, 5000, '🧱', 'https://images.unsplash.com/photo-1558618047-3c8c76ca7e0d?w=400&h=300&fit=crop'),
+('Martillo Stanley 16oz', 'Martillo de uña Stanley con mango de fibra de vidrio', 'Herramientas', 65.00, 48.00, 35, '🔨', 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop'),
+('Taladro Bosch 500W', 'Taladro eléctrico Bosch GSB 500W con maletín', 'Herramientas', 450.00, 350.00, 15, '⚡', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&h=300&fit=crop'),
+('Cable THW 2.5mm (100m)', 'Cable eléctrico THW 2.5mm² rollo de 100 metros', 'Electricidad', 180.00, 140.00, 40, '🔌', 'https://images.unsplash.com/photo-1544724107-6d5c4caaff30?w=400&h=300&fit=crop'),
+('Tubo PVC 2" (6m)', 'Tubo PVC sanitario 2 pulgadas, largo 6 metros', 'Plomería', 32.00, 25.00, 80, '🚿', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=300&fit=crop'),
+('Pintura Látex 20L', 'Pintura látex interior/exterior color blanco, balde 20L', 'Pinturas', 220.00, 175.00, 25, '🎨', 'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=400&h=300&fit=crop'),
+('Clavo 2" (1kg)', 'Clavo de acero galvanizado 2 pulgadas, bulto de 1kg', 'Ferretería General', 12.00, 9.00, 300, '📌', 'https://images.unsplash.com/photo-1590247813695-6b1aee4a77d8?w=400&h=300&fit=crop'),
 ('Cemento CPN 50kg', 'Saco de cemento CPN 50kg marca F', 'Materiales de Construcción', 42.00, 33.00, 180, '🏗️', 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop'),
-('Cinta Métrica 5m', 'Cinta métrica Stanley 5m', 'Herramientas', 25.00, 18.00, 60, '📏', 'https://images.unsplash.com/photo-1564221710304-0b37c8b9d729?w=400&h=300&fit=crop'),
-('Interruptor Simple', 'Interruptor simple polarizado 10A', 'Electricidad', 8.50, 6.00, 200, '💡', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop'),
-('Llave de paso 1/2"', 'Llave de paso cromada 1/2"', 'Plomería', 18.00, 13.00, 90, '🔧', 'https://images.unsplash.com/photo-1527612820676-9e2e38a2130a?w=400&h=300&fit=crop'),
-('Impermeabilizante 20L', 'Impermeabilizante para techos', 'Pinturas', 185.00, 145.00, 20, '🌧️', 'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=400&h=300&fit=crop'),
-('Destornillador Phillips', 'Destornillador Phillips #2', 'Herramientas', 15.00, 10.00, 75, '🪛', 'https://images.unsplash.com/photo-1586864387634-2f14c5e36a1a?w=400&h=300&fit=crop'),
-('Cable THW 4mm (100m)', 'Cable eléctrico THW 4mm²', 'Electricidad', 290.00, 230.00, 25, '🔌', 'https://images.unsplash.com/photo-1544724107-6d5c4caaff30?w=400&h=300&fit=crop'),
-('Llave Inglesa 12"', 'Llave inglesa ajustable 12"', 'Herramientas', 55.00, 40.00, 45, '🔧', 'https://images.unsplash.com/photo-1527612820676-9e2e38a2130a?w=400&h=300&fit=crop'),
-('Malla Gallinero', 'Malla galvanizada 1x25m', 'Ferretería General', 75.00, 58.00, 30, '🪤', 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=400&h=300&fit=crop'),
-('Silicona Transparente', 'Silicona selladora 300ml', 'Plomería', 15.00, 11.00, 100, '🧴', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=300&fit=crop'),
-('Disco de Corte 7"', 'Disco de corte amoladora 7"', 'Herramientas', 22.00, 16.00, 55, '💿', 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=400&h=300&fit=crop'),
-('Sierra Circular Makita', 'Sierra circular Makita 1200W', 'Herramientas', 650.00, 500.00, 12, '🪚', 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=400&h=300&fit=crop'),
-('Lijadora Orbital Bosch', 'Lijadora orbital Bosch 250W', 'Herramientas', 380.00, 290.00, 10, '🖌️', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&h=300&fit=crop'),
-('Nivel de Burbuja 60cm', 'Nivel aluminio 60cm 3 viales', 'Herramientas', 35.00, 25.00, 40, '📏', 'https://images.unsplash.com/photo-1564221710304-0b37c8b9d729?w=400&h=300&fit=crop'),
-('Llave Allen Set 9 pzs', 'Set llaves Allen 1.5-10mm', 'Herramientas', 25.00, 18.00, 50, '🔧', 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=400&h=300&fit=crop'),
-('Cinta Adhesiva 50m', 'Cinta adhesiva multiuso 50m', 'Ferretería General', 15.00, 10.00, 80, '📎', 'https://images.unsplash.com/photo-1581539250439-c96689b516dd?w=400&h=300&fit=crop'),
-('Bomba de Agua 1HP', 'Bomba centrífuga 1HP', 'Plomería', 520.00, 400.00, 8, '🚿', 'https://images.unsplash.com/photo-1527612820676-9e2e38a2130a?w=400&h=300&fit=crop'),
-('Foco LED 15W', 'Foco LED 15W 6000K', 'Electricidad', 12.00, 8.00, 150, '💡', 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&h=300&fit=crop'),
-('Cerradura Seguridad', 'Cerradura puerta con 3 llaves', 'Ferretería General', 85.00, 65.00, 20, '🔒', 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=400&h=300&fit=crop'),
-('Bisagra Premium 4"', 'Bisagra acero inoxidable 4"', 'Ferretería General', 18.00, 12.00, 60, '🔩', 'https://images.unsplash.com/photo-1586864387634-2f14c5e36a1a?w=400&h=300&fit=crop'),
-('Tornillo Madera 3" (kg)', 'Tornillo madera galvanizado 1kg', 'Ferretería General', 22.00, 16.00, 100, '🔩', 'https://images.unsplash.com/photo-1586864387634-2f14c5e36a1a?w=400&h=300&fit=crop'),
-('Pegamento PVC 250ml', 'Adhesivo tubería PVC 250ml', 'Plomería', 20.00, 14.00, 50, '🧴', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=300&fit=crop'),
-('Grifo Cocina', 'Grifo cromado monocomando', 'Plomería', 95.00, 72.00, 15, '🚿', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=300&fit=crop'),
-('Flexómetro 5m', 'Flexómetro profesional 5m', 'Herramientas', 28.00, 20.00, 35, '📏', 'https://images.unsplash.com/photo-1564221710304-0b37c8b9d729?w=400&h=300&fit=crop'),
-('Destornillador Set 6 pzs', 'Set destornilladores 6 piezas', 'Herramientas', 45.00, 33.00, 25, '🪛', 'https://images.unsplash.com/photo-1586864387634-2f14c5e36a1a?w=400&h=300&fit=crop'),
-('Brocha 4" Profesional', 'Brocha cerda 4" para látex', 'Pinturas', 18.00, 12.00, 45, '🎨', 'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=400&h=300&fit=crop');
+('Cinta Métrica 5m', 'Cinta métrica Stanley 5 metros con auto-lock', 'Herramientas', 25.00, 18.00, 60, '📏', 'https://images.unsplash.com/photo-1564221710304-0b37c8b9d729?w=400&h=300&fit=crop'),
+('Interruptor Simple', 'Interruptor simple polarizado blanco 10A', 'Electricidad', 8.50, 6.00, 200, '💡', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop'),
+('Llave de paso 1/2"', 'Llave de paso cromada 1/2 pulgada', 'Plomería', 18.00, 13.00, 90, '🔧', 'https://images.unsplash.com/photo-1527612820676-9e2e38a2130a?w=400&h=300&fit=crop'),
+('Impermeabilizante 20L', 'Impermeabilizante para techos color terracota 20L', 'Pinturas', 185.00, 145.00, 20, '🌧️', 'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=400&h=300&fit=crop'),
+('Destornillador Phillips', 'Destornillador Phillips #2 mango ergonómico', 'Herramientas', 15.00, 10.00, 75, '🪛', 'https://images.unsplash.com/photo-1586864387634-2f14c5e36a1a?w=400&h=300&fit=crop'),
+('Cable THW 4mm (100m)', 'Cable eléctrico THW 4mm² rollo 100m', 'Electricidad', 290.00, 230.00, 25, '🔌', 'https://images.unsplash.com/photo-1544724107-6d5c4caaff30?w=400&h=300&fit=crop'),
+('Llave Inglesa 12"', 'Llave inglesa ajustable 12 pulgadas cromada', 'Herramientas', 55.00, 40.00, 45, '🔧', 'https://images.unsplash.com/photo-1527612820676-9e2e38a2130a?w=400&h=300&fit=crop'),
+('Malla Gallinero', 'Malla galvanizada gallinero 1x25m rollo', 'Ferretería General', 75.00, 58.00, 30, '🪤', 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=400&h=300&fit=crop'),
+('Silicona Transparente', 'Silicona selladora transparente 300ml', 'Plomería', 15.00, 11.00, 100, '🧴', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=300&fit=crop'),
+('Disco de Corte 7"', 'Disco de corte para amoladora 7 pulgadas metal', 'Herramientas', 22.00, 16.00, 55, '💿', 'https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=400&h=300&fit=crop'),
+('Sierra Circular Makita 7-1/4"', 'Sierra circular profesional Makita 7-1/4 pulgadas 1200W con maletín de transporte', 'Herramientas', 650.00, 500.00, 12, '🪚', 'https://images.unsplash.com/photo-1581783898377-1c85bf937427?w=400&h=300&fit=crop'),
+('Lijadora Orbital Bosch 250W', 'Lijadora orbital Bosch GEX 250W con sistema de extracción de polvo', 'Herramientas', 380.00, 290.00, 10, '🖌️', 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&h=300&fit=crop'),
+('Nivel de Burbuja 60cm', 'Nivel de burbuja de aluminio 60cm con 3 viales de precisión', 'Herramientas', 35.00, 25.00, 40, '📏', 'https://images.unsplash.com/photo-1564221710304-0b37c8b9d729?w=400&h=300&fit=crop'),
+('Llave Allen Set 9 pzs', 'Set de llaves Allen métricas 1.5-10mm con soporte organizador', 'Herramientas', 25.00, 18.00, 50, '🔧', 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=400&h=300&fit=crop'),
+('Cinta Adhesiva Multiuso 50m', 'Cinta adhesiva multiuso resistente 50 metros x 48mm', 'Ferretería General', 15.00, 10.00, 80, '📎', 'https://images.unsplash.com/photo-1581539250439-c96689b516dd?w=400&h=300&fit=crop'),
+('Bomba de Agua 1HP', 'Bomba de agua centrífuga 1HP para uso doméstico y riego', 'Plomería', 520.00, 400.00, 8, '🚿', 'https://images.unsplash.com/photo-1527612820676-9e2e38a2130a?w=400&h=300&fit=crop'),
+('Foco LED 15W', 'Foco LED 15W luz blanca 6000K equivalente a 100W incandescente', 'Electricidad', 12.00, 8.00, 150, '💡', 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&h=300&fit=crop'),
+('Cerradura Puerta Seguridad', 'Cerradura de seguridad para puerta principal con 3 llaves', 'Ferretería General', 85.00, 65.00, 20, '🔒', 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=400&h=300&fit=crop'),
+('Bisagra Premium Acero', 'Bisagra de acero inoxidable premium 4" con tornillos incluidos', 'Ferretería General', 18.00, 12.00, 60, '🔩', 'https://images.unsplash.com/photo-1586864387634-2f14c5e36a1a?w=400&h=300&fit=crop'),
+('Tornillo Para Madera 3" (kg)', 'Tornillo para madera 3 pulgadas galvanizado, bolsa de 1kg', 'Ferretería General', 22.00, 16.00, 100, '🔩', 'https://images.unsplash.com/photo-1586864387634-2f14c5e36a1a?w=400&h=300&fit=crop'),
+('Pegamento PVC 250ml', 'Pegamento adhesivo para tubería PVC 250ml', 'Plomería', 20.00, 14.00, 50, '🧴', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=300&fit=crop'),
+('Grifo Cocina Cromado', 'Grifo de cocina cromado monocomando con aireador', 'Plomería', 95.00, 72.00, 15, '🚿', 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&h=300&fit=crop'),
+('Flexómetro 5m', 'Flexómetro profesional 5 metros con cinta metálica', 'Herramientas', 28.00, 20.00, 35, '📏', 'https://images.unsplash.com/photo-1564221710304-0b37c8b9d729?w=400&h=300&fit=crop'),
+('Destornillador Set 6 pzs', 'Set de destornilladores 6 piezas con mangos ergonómicos', 'Herramientas', 45.00, 33.00, 25, '🪛', 'https://images.unsplash.com/photo-1586864387634-2f14c5e36a1a?w=400&h=300&fit=crop'),
+('Brocha 4" Profesional', 'Brocha profesional de cerda 4 pulgadas para pintura látex', 'Pinturas', 18.00, 12.00, 45, '🎨', 'https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=400&h=300&fit=crop');
 
 CREATE INDEX IF NOT EXISTS IX_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS IX_users_rol ON users(rol);
