@@ -40,6 +40,7 @@ export const usePagosCobrosStore = create((set, get) => ({
         body: JSON.stringify(data),
       });
       const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Error al guardar');
       set((s) => ({ items: [...s.items, mapRecord(json.data)], loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });
@@ -55,6 +56,7 @@ export const usePagosCobrosStore = create((set, get) => ({
         body: JSON.stringify(data),
       });
       const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Error al actualizar');
       set((s) => ({
         items: s.items.map((i) => (i.id === id ? { ...i, ...mapRecord(json.data) } : i)),
         loading: false,

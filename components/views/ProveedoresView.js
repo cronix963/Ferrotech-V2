@@ -17,6 +17,7 @@ export default function ProveedoresView() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
+  const [formError, setFormError] = useState('');
   const [q, setQ] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteStats, setDeleteStats] = useState(null);
@@ -27,17 +28,27 @@ export default function ProveedoresView() {
 
   const filtered = q ? search(q) : items;
 
+  const openNewForm = () => { setEditing(null); setFormData({}); setFormError(''); setShowForm(true); };
+  const openEditForm = (record) => { setEditing(record); setFormData({ ...record }); setFormError(''); setShowForm(true); };
+
   if (loading && items.length === 0) return <LoadingSpinner />;
   if (error) return <ErrorBanner message={error} onRetry={fetchAll} />;
-  if (!loading && items.length === 0) return <EmptyState message="No hay proveedores registrados" onCreate={() => { setEditing(null); setFormData({}); setShowForm(true); }} />;
+  if (!loading && items.length === 0) return <EmptyState message="No hay proveedores registrados" onCreate={openNewForm} />;
 
   const handleSave = async () => {
+    if (!formData.nombre?.trim()) {
+      setFormError('El nombre es requerido');
+      return;
+    }
     setSaving(true);
+    setFormError('');
     try {
       if (editing) await updateItem(editing.id, formData);
       else await addItem(formData);
       setShowForm(false);
       setEditing(null);
+    } catch (err) {
+      setFormError(err.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -48,7 +59,7 @@ export default function ProveedoresView() {
       <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-xl text-primary flex items-center gap-2">🏭 Proveedores <span className="text-[0.65rem] font-normal text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full">Sebastian</span></h2>
         <div className="flex gap-2">
-          <button onClick={() => { setEditing(null); setFormData({}); setShowForm(true); }}
+          <button onClick={openNewForm}
             className="inline-flex items-center gap-1 px-4 py-2 bg-accent text-white border-0 rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap transition-all duration-200 hover:brightness-110"><FiPlus size={14} /> Nuevo Proveedor</button>
         </div>
       </div>
@@ -85,7 +96,7 @@ export default function ProveedoresView() {
               <td className="px-3 py-2 text-xs"><span className="inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold bg-[#EBF8FF] text-primary-light">{p.rubro}</span></td>
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(p.estado)}`}>{p.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
-                <button onClick={() => { setEditing(p); setFormData({ ...p }); setShowForm(true); }} className="text-primary hover:underline text-xs mr-3">Editar</button>
+                <button onClick={() => openEditForm(p)} className="text-primary hover:underline text-xs mr-3">Editar</button>
                 <button onClick={async () => {
                   setDeleteTarget({ id: p.id, nombre: p.nombre });
                   try {
@@ -104,31 +115,38 @@ export default function ProveedoresView() {
       </table>
 
       {showForm && (
-        <FormModal title={editing ? 'Editar Proveedor' : 'Nuevo Proveedor'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); }} loading={saving}>
+        <FormModal title={editing ? 'Editar Proveedor' : 'Nuevo Proveedor'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); setFormError(''); }} loading={saving}>
           <div className="space-y-3">
+            {formError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-md px-3 py-2">{formError}</div>
+            )}
             <label className="block">
-              <span className="text-gray-600 text-sm">Nombre</span>
-              <input type="text" value={formData.nombre || ''} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" required />
+              <span className="text-gray-600 text-sm">Nombre <span className="text-danger">*</span></span>
+              <input type="text" value={formData.nombre || ''} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del proveedor" required />
             </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Contacto</span>
-              <input type="text" value={formData.contacto || ''} onChange={e => setFormData({...formData, contacto: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-            </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Teléfono</span>
-              <input type="text" value={formData.telefono || formData.tel || ''} onChange={e => setFormData({...formData, telefono: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-            </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Dirección</span>
-              <input type="text" value={formData.direccion || ''} onChange={e => setFormData({...formData, direccion: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-            </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Email</span>
-              <input type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-gray-600 text-sm">Contacto</span>
+                <input type="text" value={formData.contacto || ''} onChange={e => setFormData({...formData, contacto: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del contacto" />
+              </label>
+              <label className="block">
+                <span className="text-gray-600 text-sm">Teléfono</span>
+                <input type="text" value={formData.telefono || formData.tel || ''} onChange={e => setFormData({...formData, telefono: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Número de teléfono" />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-gray-600 text-sm">Dirección</span>
+                <input type="text" value={formData.direccion || ''} onChange={e => setFormData({...formData, direccion: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Dirección completa" />
+              </label>
+              <label className="block">
+                <span className="text-gray-600 text-sm">Email</span>
+                <input type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="correo@ejemplo.com" />
+              </label>
+            </div>
             <label className="block">
               <span className="text-gray-600 text-sm">Rubro</span>
-              <input type="text" value={formData.rubro || ''} onChange={e => setFormData({...formData, rubro: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input type="text" value={formData.rubro || ''} onChange={e => setFormData({...formData, rubro: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Ej: Acero, Electricidad" />
             </label>
           </div>
         </FormModal>

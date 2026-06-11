@@ -18,6 +18,7 @@ export default function EnviosView() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
+  const [formError, setFormError] = useState('');
   const [q, setQ] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -27,17 +28,27 @@ export default function EnviosView() {
 
   const filtered = q ? search(q) : items;
 
+  const openNewForm = () => { setEditing(null); setFormData({}); setFormError(''); setShowForm(true); };
+  const openEditForm = (record) => { setEditing(record); setFormData({ ...record }); setFormError(''); setShowForm(true); };
+
   if (loading && items.length === 0) return <LoadingSpinner />;
   if (error) return <ErrorBanner message={error} onRetry={fetchAll} />;
-  if (!loading && items.length === 0) return <EmptyState message="No hay envíos registrados" onCreate={() => { setEditing(null); setFormData({}); setShowForm(true); }} />;
+  if (!loading && items.length === 0) return <EmptyState message="No hay envíos registrados" onCreate={openNewForm} />;
 
   const handleSave = async () => {
+    if (!formData.pedido?.trim()) {
+      setFormError('El pedido es requerido');
+      return;
+    }
     setSaving(true);
+    setFormError('');
     try {
       if (editing) await updateItem(editing.id, formData);
       else await addItem(formData);
       setShowForm(false);
       setEditing(null);
+    } catch (err) {
+      setFormError(err.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -48,7 +59,7 @@ export default function EnviosView() {
       <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-xl text-primary flex items-center gap-2">🚚 Envíos <span className="text-[0.65rem] font-normal text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full">Issai</span></h2>
         <div className="flex gap-2">
-          <button onClick={() => { setEditing(null); setFormData({}); setShowForm(true); }}
+          <button onClick={openNewForm}
             className="inline-flex items-center gap-1 px-4 py-2 bg-accent text-white border-0 rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap transition-all duration-200 hover:brightness-110"><FiPlus size={14} /> Nuevo Envío</button>
         </div>
       </div>
@@ -85,7 +96,7 @@ export default function EnviosView() {
               <td className="px-3 py-2 text-xs text-gray-700">{e.fecha_env}</td>
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(e.estado)}`}>{e.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
-                <button onClick={() => { setEditing(e); setFormData({ ...e }); setShowForm(true); }} className="text-primary hover:underline text-xs mr-3">Editar</button>
+                <button onClick={() => openEditForm(e)} className="text-primary hover:underline text-xs mr-3">Editar</button>
                 <button onClick={() => {
                   setDeleteTarget({ id: e.id, nombre: e.cliente });
                   setShowDeleteModal(true);
@@ -97,19 +108,22 @@ export default function EnviosView() {
       </table>
 
       {showForm && (
-        <FormModal title={editing ? 'Editar Envío' : 'Nuevo Envío'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); }} loading={saving}>
+        <FormModal title={editing ? 'Editar Envío' : 'Nuevo Envío'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); setFormError(''); }} loading={saving}>
           <div className="space-y-3">
+            {formError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-md px-3 py-2">{formError}</div>
+            )}
             <label className="block">
-              <span className="text-gray-600 text-sm">Pedido</span>
-              <input type="text" value={formData.pedido || ''} onChange={e => setFormData({...formData, pedido: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <span className="text-gray-600 text-sm">Pedido <span className="text-danger">*</span></span>
+              <input type="text" value={formData.pedido || ''} onChange={e => setFormData({...formData, pedido: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Número de pedido" />
             </label>
             <label className="block">
               <span className="text-gray-600 text-sm">Dirección</span>
-              <input type="text" value={formData.direccion || ''} onChange={e => setFormData({...formData, direccion: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input type="text" value={formData.direccion || ''} onChange={e => setFormData({...formData, direccion: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Dirección de entrega" />
             </label>
             <label className="block">
               <span className="text-gray-600 text-sm">Repartidor / Transportista</span>
-              <input type="text" value={formData.repartidor || ''} onChange={e => setFormData({...formData, repartidor: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input type="text" value={formData.repartidor || ''} onChange={e => setFormData({...formData, repartidor: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del repartidor" />
             </label>
             <label className="block">
               <span className="text-gray-600 text-sm">Fecha de envío</span>

@@ -18,6 +18,7 @@ export default function ComprasView() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
+  const [formError, setFormError] = useState('');
   const [q, setQ] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -27,17 +28,27 @@ export default function ComprasView() {
 
   const filtered = q ? search(q) : items;
 
+  const openNewForm = () => { setEditing(null); setFormData({}); setFormError(''); setShowForm(true); };
+  const openEditForm = (record) => { setEditing(record); setFormData({ ...record }); setFormError(''); setShowForm(true); };
+
   if (loading && items.length === 0) return <LoadingSpinner />;
   if (error) return <ErrorBanner message={error} onRetry={fetchAll} />;
-  if (!loading && items.length === 0) return <EmptyState message="No hay compras registradas" onCreate={() => { setEditing(null); setFormData({}); setShowForm(true); }} />;
+  if (!loading && items.length === 0) return <EmptyState message="No hay compras registradas" onCreate={openNewForm} />;
 
   const handleSave = async () => {
+    if (!formData.proveedor?.trim()) {
+      setFormError('El proveedor es requerido');
+      return;
+    }
     setSaving(true);
+    setFormError('');
     try {
       if (editing) await updateItem(editing.id, formData);
       else await addItem(formData);
       setShowForm(false);
       setEditing(null);
+    } catch (err) {
+      setFormError(err.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -48,7 +59,7 @@ export default function ComprasView() {
       <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-xl text-primary flex items-center gap-2">🛒 Compras <span className="text-[0.65rem] font-normal text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full">Katerin</span></h2>
         <div className="flex gap-2">
-          <button onClick={() => { setEditing(null); setFormData({}); setShowForm(true); }}
+          <button onClick={openNewForm}
             className="inline-flex items-center gap-1 px-4 py-2 bg-accent text-white border-0 rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap transition-all duration-200 hover:brightness-110"><FiPlus size={14} /> Nueva Compra</button>
         </div>
       </div>
@@ -87,7 +98,7 @@ export default function ComprasView() {
               <td className="px-3 py-2 text-xs text-gray-700">{c.fecha}</td>
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(c.estado)}`}>{c.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
-                <button onClick={() => { setEditing(c); setFormData({ ...c }); setShowForm(true); }} className="text-primary hover:underline text-xs mr-3">Editar</button>
+                <button onClick={() => openEditForm(c)} className="text-primary hover:underline text-xs mr-3">Editar</button>
                 <button onClick={() => {
                   setDeleteTarget({ id: c.id, nombre: `${c.producto} - ${c.proveedor}` });
                   setShowDeleteModal(true);
@@ -99,27 +110,32 @@ export default function ComprasView() {
       </table>
 
       {showForm && (
-        <FormModal title={editing ? 'Editar Compra' : 'Nueva Compra'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); }} loading={saving}>
+        <FormModal title={editing ? 'Editar Compra' : 'Nueva Compra'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); setFormError(''); }} loading={saving}>
           <div className="space-y-3">
+            {formError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-md px-3 py-2">{formError}</div>
+            )}
             <label className="block">
-              <span className="text-gray-600 text-sm">Proveedor</span>
-              <input type="text" value={formData.proveedor || ''} onChange={e => setFormData({...formData, proveedor: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" required />
+              <span className="text-gray-600 text-sm">Proveedor <span className="text-danger">*</span></span>
+              <input type="text" value={formData.proveedor || ''} onChange={e => setFormData({...formData, proveedor: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del proveedor" required />
             </label>
             <label className="block">
               <span className="text-gray-600 text-sm">Producto</span>
-              <input type="text" value={formData.producto || ''} onChange={e => setFormData({...formData, producto: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input type="text" value={formData.producto || ''} onChange={e => setFormData({...formData, producto: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del producto" />
             </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Cantidad</span>
-              <input type="number" min="0" value={formData.cantidad ?? ''} onChange={e => setFormData({...formData, cantidad: parseInt(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-            </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Unidad</span>
-              <input type="text" value={formData.unidad || ''} onChange={e => setFormData({...formData, unidad: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-gray-600 text-sm">Cantidad</span>
+                <input type="number" min="0" value={formData.cantidad ?? ''} onChange={e => setFormData({...formData, cantidad: parseInt(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="0" />
+              </label>
+              <label className="block">
+                <span className="text-gray-600 text-sm">Unidad</span>
+                <input type="text" value={formData.unidad || ''} onChange={e => setFormData({...formData, unidad: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Ej: kg, m, pz" />
+              </label>
+            </div>
             <label className="block">
               <span className="text-gray-600 text-sm">Total (Bs)</span>
-              <input type="number" step="0.01" min="0" value={formData.precio ?? ''} onChange={e => setFormData({...formData, precio: parseFloat(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input type="number" step="0.01" min="0" value={formData.precio ?? ''} onChange={e => setFormData({...formData, precio: parseFloat(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="0.00" />
             </label>
             <label className="block">
               <span className="text-gray-600 text-sm">Estado</span>

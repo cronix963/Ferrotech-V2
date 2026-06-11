@@ -18,6 +18,7 @@ export default function ProductosView() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
+  const [formError, setFormError] = useState('');
   const [q, setQ] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -27,17 +28,27 @@ export default function ProductosView() {
 
   const filtered = q ? search(q) : items;
 
+  const openNewForm = () => { setEditing(null); setFormData({}); setFormError(''); setShowForm(true); };
+  const openEditForm = (record) => { setEditing(record); setFormData({ ...record }); setFormError(''); setShowForm(true); };
+
   if (loading && items.length === 0) return <LoadingSpinner />;
   if (error) return <ErrorBanner message={error} onRetry={fetchAll} />;
-  if (!loading && items.length === 0) return <EmptyState message="No hay productos registrados" onCreate={() => { setEditing(null); setFormData({}); setShowForm(true); }} />;
+  if (!loading && items.length === 0) return <EmptyState message="No hay productos registrados" onCreate={openNewForm} />;
 
   const handleSave = async () => {
+    if (!formData.nombre?.trim()) {
+      setFormError('El nombre es requerido');
+      return;
+    }
     setSaving(true);
+    setFormError('');
     try {
       if (editing) await updateItem(editing.id, formData);
       else await addItem(formData);
       setShowForm(false);
       setEditing(null);
+    } catch (err) {
+      setFormError(err.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -48,7 +59,7 @@ export default function ProductosView() {
       <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-xl text-primary flex items-center gap-2">📦 Productos <span className="text-[0.65rem] font-normal text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full">Sebastian</span></h2>
         <div className="flex gap-2">
-          <button onClick={() => { setEditing(null); setFormData({}); setShowForm(true); }}
+          <button onClick={openNewForm}
             className="inline-flex items-center gap-1 px-4 py-2 bg-accent text-white border-0 rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap transition-all duration-200 hover:brightness-110"><FiPlus size={14} /> Nuevo Producto</button>
         </div>
       </div>
@@ -88,7 +99,7 @@ export default function ProductosView() {
               <td className="px-3 py-2 text-xs text-gray-700 font-semibold">{formatPrice(p.precio)}</td>
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(p.estado)}`}>{p.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
-                <button onClick={() => { setEditing(p); setFormData({ ...p }); setShowForm(true); }} className="text-primary hover:underline text-xs mr-3">Editar</button>
+                <button onClick={() => openEditForm(p)} className="text-primary hover:underline text-xs mr-3">Editar</button>
                 <button onClick={() => {
                   setDeleteTarget({ id: p.id, nombre: p.nombre });
                   setShowDeleteModal(true);
@@ -100,35 +111,42 @@ export default function ProductosView() {
       </table>
 
       {showForm && (
-        <FormModal title={editing ? 'Editar Producto' : 'Nuevo Producto'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); }} loading={saving}>
+        <FormModal title={editing ? 'Editar Producto' : 'Nuevo Producto'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); setFormError(''); }} loading={saving}>
           <div className="space-y-3">
+            {formError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-md px-3 py-2">{formError}</div>
+            )}
             <label className="block">
-              <span className="text-gray-600 text-sm">Nombre</span>
-              <input type="text" value={formData.nombre || ''} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" required />
+              <span className="text-gray-600 text-sm">Nombre <span className="text-danger">*</span></span>
+              <input type="text" value={formData.nombre || ''} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del producto" required />
             </label>
             <label className="block">
               <span className="text-gray-600 text-sm">Descripción</span>
-              <textarea value={formData.descripcion || ''} onChange={e => setFormData({...formData, descripcion: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <textarea value={formData.descripcion || ''} onChange={e => setFormData({...formData, descripcion: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Descripción del producto" />
             </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Precio (Bs)</span>
-              <input type="number" step="0.01" min="0" value={formData.precio ?? ''} onChange={e => setFormData({...formData, precio: parseFloat(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" required />
-            </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Stock</span>
-              <input type="number" min="0" value={formData.stock ?? ''} onChange={e => setFormData({...formData, stock: parseInt(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" required />
-            </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Categoría</span>
-              <input type="text" value={formData.categoria || ''} onChange={e => setFormData({...formData, categoria: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-            </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Estado</span>
-              <select value={formData.activo !== false ? 'activo' : 'inactivo'} onChange={e => setFormData({...formData, activo: e.target.value === 'activo'})} className="w-full border rounded px-3 py-2 text-sm mt-1">
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-              </select>
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-gray-600 text-sm">Precio (Bs) <span className="text-danger">*</span></span>
+                <input type="number" step="0.01" min="0" value={formData.precio ?? ''} onChange={e => setFormData({...formData, precio: parseFloat(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="0.00" required />
+              </label>
+              <label className="block">
+                <span className="text-gray-600 text-sm">Stock <span className="text-danger">*</span></span>
+                <input type="number" min="0" value={formData.stock ?? ''} onChange={e => setFormData({...formData, stock: parseInt(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="0" required />
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-gray-600 text-sm">Categoría</span>
+                <input type="text" value={formData.categoria || ''} onChange={e => setFormData({...formData, categoria: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Ej: Herramientas, Tuberías" />
+              </label>
+              <label className="block">
+                <span className="text-gray-600 text-sm">Estado</span>
+                <select value={formData.activo !== false ? 'activo' : 'inactivo'} onChange={e => setFormData({...formData, activo: e.target.value === 'activo'})} className="w-full border rounded px-3 py-2 text-sm mt-1">
+                  <option value="activo">Activo</option>
+                  <option value="inactivo">Inactivo</option>
+                </select>
+              </label>
+            </div>
           </div>
         </FormModal>
       )}

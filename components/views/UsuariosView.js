@@ -19,6 +19,7 @@ export default function UsuariosView() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
+  const [formError, setFormError] = useState('');
   const [q, setQ] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteStats, setDeleteStats] = useState(null);
@@ -29,12 +30,24 @@ export default function UsuariosView() {
 
   const filtered = q ? search(q) : items;
 
+  const openNewForm = () => { setEditing(null); setFormData({}); setFormError(''); setShowForm(true); };
+  const openEditForm = (record) => { setEditing(record); setFormData({ ...record }); setFormError(''); setShowForm(true); };
+
   if (loading && items.length === 0) return <LoadingSpinner />;
   if (error) return <ErrorBanner message={error} onRetry={fetchAll} />;
-  if (!loading && items.length === 0) return <EmptyState message="No hay usuarios registrados" onCreate={() => { setEditing(null); setFormData({}); setShowForm(true); }} />;
+  if (!loading && items.length === 0) return <EmptyState message="No hay usuarios registrados" onCreate={openNewForm} />;
 
   const handleSave = async () => {
+    if (!formData.email?.trim()) {
+      setFormError('El email es requerido');
+      return;
+    }
+    if (!editing && !formData.password?.trim()) {
+      setFormError('La contraseña es requerida');
+      return;
+    }
     setSaving(true);
+    setFormError('');
     try {
       if (editing) {
         const { password, ...rest } = formData;
@@ -44,6 +57,8 @@ export default function UsuariosView() {
       }
       setShowForm(false);
       setEditing(null);
+    } catch (err) {
+      setFormError(err.message || 'Error al guardar');
     } finally {
       setSaving(false);
     }
@@ -54,7 +69,7 @@ export default function UsuariosView() {
       <div className="flex justify-between items-center flex-wrap gap-2">
         <h2 className="text-xl text-primary flex items-center gap-2">👥 Usuarios <span className="text-[0.65rem] font-normal text-gray-400 bg-gray-100 px-2.5 py-0.5 rounded-full">Miguel</span></h2>
         <div className="flex gap-2">
-          <button onClick={() => { setEditing(null); setFormData({}); setShowForm(true); }}
+          <button onClick={openNewForm}
             className="inline-flex items-center gap-1 px-4 py-2 bg-accent text-white border-0 rounded-md text-xs font-semibold cursor-pointer whitespace-nowrap transition-all duration-200 hover:brightness-110"><FiPlus size={14} /> Nuevo</button>
         </div>
       </div>
@@ -87,7 +102,7 @@ export default function UsuariosView() {
               <td className="px-3 py-2 text-xs text-gray-700">{u.rol}</td>
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(u.estado)}`}>{u.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
-                <button onClick={() => { setEditing(u); setFormData({ ...u }); setShowForm(true); }} className="text-primary hover:underline text-xs mr-3">Editar</button>
+                <button onClick={() => openEditForm(u)} className="text-primary hover:underline text-xs mr-3">Editar</button>
                 <button onClick={async () => {
                   setDeleteTarget({ id: u.id, nombre: u.nombre });
                   try {
@@ -106,28 +121,33 @@ export default function UsuariosView() {
       </table>
 
       {showForm && (
-        <FormModal title={editing ? 'Editar Usuario' : 'Nuevo Usuario'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); }} loading={saving}>
+        <FormModal title={editing ? 'Editar Usuario' : 'Nuevo Usuario'} onSave={handleSave} onClose={() => { setShowForm(false); setEditing(null); setFormError(''); }} loading={saving}>
           <div className="space-y-3">
+            {formError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-md px-3 py-2">{formError}</div>
+            )}
             <label className="block">
-              <span className="text-gray-600 text-sm">Email</span>
-              <input type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" required />
+              <span className="text-gray-600 text-sm">Email <span className="text-danger">*</span></span>
+              <input type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="correo@ejemplo.com" required />
             </label>
             {!editing && (
               <label className="block">
-                <span className="text-gray-600 text-sm">Contraseña</span>
-                <input type="password" value={formData.password || ''} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" required />
+                <span className="text-gray-600 text-sm">Contraseña <span className="text-danger">*</span></span>
+                <input type="password" value={formData.password || ''} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Contraseña del usuario" required />
               </label>
             )}
-            <label className="block">
-              <span className="text-gray-600 text-sm">Nombre</span>
-              <input type="text" value={formData.nombre || ''} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-            </label>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Rol</span>
-              <select value={formData.rol || 'cliente'} onChange={e => setFormData({...formData, rol: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1">
-                {roles.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
-              </select>
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-gray-600 text-sm">Nombre</span>
+                <input type="text" value={formData.nombre || ''} onChange={e => setFormData({...formData, nombre: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre completo" />
+              </label>
+              <label className="block">
+                <span className="text-gray-600 text-sm">Rol</span>
+                <select value={formData.rol || 'cliente'} onChange={e => setFormData({...formData, rol: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1">
+                  {roles.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+                </select>
+              </label>
+            </div>
           </div>
         </FormModal>
       )}
