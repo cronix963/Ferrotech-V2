@@ -6,7 +6,12 @@ import {
   FiDollarSign,
   FiPackage,
   FiShoppingCart,
+  FiAlertTriangle,
 } from 'react-icons/fi';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts';
 import { formatPrice } from '../../lib/price';
 
 const formatDateTime = (iso) => {
@@ -23,9 +28,41 @@ const formatDateTime = (iso) => {
   } catch { return ''; }
 };
 
+const PIE_COLORS = ['#38A169', '#2B6CB0', '#DD6B20', '#E53E3E', '#805AD5', '#D69E2E'];
+
+const groupByDay = (data, days = 14) => {
+  const map = {};
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+    map[key] = 0;
+  }
+  data.forEach((v) => {
+    if (!v.created_at && !v.fecha) return;
+    const d = new Date(v.created_at || v.fecha);
+    const key = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+    if (map[key] !== undefined) map[key] += parseFloat(v.total) || 0;
+  });
+  return Object.entries(map).map(([fecha, total]) => ({ fecha, total: Math.round(total * 100) / 100 }));
+};
+
+const countByStatus = (data) => {
+  const map = {};
+  data.forEach((p) => {
+    const s = p.estado || 'Desconocido';
+    map[s] = (map[s] || 0) + 1;
+  });
+  return Object.entries(map).map(([name, value]) => ({ name, value }));
+};
+
 export default function ReportesView() {
   const [stats, setStats] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [statusData, setStatusData] = useState([]);
+  const [bajoStock, setBajoStock] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
@@ -38,12 +75,16 @@ export default function ReportesView() {
           clientesRes,
           productosRes,
           recentPedidos,
+          productosBajoRes,
+          pedidosTodosRes,
         ] = await Promise.all([
-          fetch('/api/ventas?limit=200&sort=-created_at').then((r) => r.json()),
+          fetch('/api/ventas?limit=500&sort=-created_at').then((r) => r.json()),
           fetch('/api/pedidos?limit=1').then((r) => r.json()),
           fetch('/api/clientes?limit=1').then((r) => r.json()),
           fetch('/api/productos?limit=1').then((r) => r.json()),
           fetch('/api/pedidos?limit=8&sort=-created_at').then((r) => r.json()),
+          fetch('/api/productos?limit=10&sort=stock&sort_dir=asc').catch(() => ({ data: [] })),
+          fetch('/api/pedidos?limit=500&sort=-created_at').then((r) => r.json()),
         ]);
 
         const ventasMes = ventasRes.data || [];
@@ -97,6 +138,19 @@ export default function ReportesView() {
             color: '#E53E3E',
           },
         ]);
+
+        // Ventas por día (últimos 14 días)
+        setChartData(groupByDay(ventasMes, 14));
+
+        // Pedidos por estado
+        setStatusData(countByStatus(pedidosTodosRes.data || []));
+
+        // Productos con bajo stock
+        const bajos = (productosBajoRes.data || [])
+          .filter((p) => p.stock <= (p.stock_minimo || 5))
+          .slice(0, 10)
+          .map((p) => ({ nombre: p.nombre.length > 22 ? p.nombre.slice(0, 20) + '…' : p.nombre, stock: p.stock, minimo: p.stock_minimo || 5 }));
+        setBajoStock(bajos);
 
         const activity = (recentPedidos.data || []).map((p) => ({
           action: `Nuevo pedido ${p.codigo || String(p.id).slice(0, 8).toUpperCase()}`,
@@ -371,6 +425,83 @@ export default function ReportesView() {
           </div>
         ))}
       </div>
+
+      {/* ═══ CHARTS SECTION ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+        {/* Ventas por día */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 lg:col-span-2">
+          <h4 className="text-xs text-primary font-semibold mb-3">Ventas por Día (Últimos 14 días)</h4>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={chartData} margin={{ top: 4, right: 8, left: -8, bottom: 0 }}>
+                <XAxis dataKey="fecha" tick={{ fontSize: 10, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#6B7280' }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(1)}k` : v} />
+                <Tooltip
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                  formatter={(v) => [formatPrice(v), 'Total']}
+                  labelStyle={{ fontWeight: 600 }}
+                />
+                <Bar dataKey="total" fill="#2B6CB0" radius={[4, 4, 0, 0]} maxBarSize={32} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-xs">Sin datos de ventas</div>
+          )}
+        </div>
+
+        {/* Pedidos por estado */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h4 className="text-xs text-primary font-semibold mb-1">Pedidos por Estado</h4>
+          {statusData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={80}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {statusData.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }} />
+                <Legend
+                  verticalAlign="bottom"
+                  height={30}
+                  iconSize={8}
+                  formatter={(v) => <span className="text-[0.6rem] text-gray-600">{v}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-xs">Sin pedidos</div>
+          )}
+        </div>
+      </div>
+
+      {/* Bajo stock */}
+      {bajoStock.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-5">
+          <h4 className="text-xs text-primary font-semibold mb-3 flex items-center gap-1.5">
+            <FiAlertTriangle className="text-warning" size={13} /> Productos con Stock Bajo
+          </h4>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={bajoStock} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+              <XAxis type="number" tick={{ fontSize: 10, fill: '#6B7280' }} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="nombre" tick={{ fontSize: 10, fill: '#4B5563' }} axisLine={false} tickLine={false} width={140} />
+              <Tooltip
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                formatter={(v) => [v, 'Stock actual']}
+              />
+              <Bar dataKey="stock" fill="#DD6B20" radius={[0, 4, 4, 0]} maxBarSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       <h4 className="text-xs text-primary mb-2.5">Actividad Reciente</h4>
 

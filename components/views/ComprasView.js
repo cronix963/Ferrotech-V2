@@ -40,11 +40,26 @@ export default function ComprasView() {
       setFormError('El proveedor es requerido');
       return;
     }
+    if (!formData.producto?.trim()) {
+      setFormError('El producto es requerido');
+      return;
+    }
+    if (!formData.cantidad || formData.cantidad <= 0) {
+      setFormError('La cantidad debe ser mayor a 0');
+      return;
+    }
     setSaving(true);
     setFormError('');
     try {
-      if (editing) await updateItem(editing.id, formData);
-      else await addItem(formData);
+      const payload = {
+        proveedor: formData.proveedor,
+        items: [{ producto: formData.producto, cantidad: formData.cantidad, unidad: formData.unidad || 'pz', precio: formData.precio }],
+        total: (formData.cantidad || 0) * (formData.precio || 0),
+        estado: formData.estado || 'Pendiente',
+        notas: formData.notas || null,
+      };
+      if (editing) await updateItem(editing.id, payload);
+      else await addItem(payload);
       setShowForm(false);
       setEditing(null);
     } catch (err) {
@@ -75,7 +90,7 @@ export default function ComprasView() {
       <table className="w-full border-collapse bg-white rounded-lg overflow-hidden border border-gray-200">
         <thead className="bg-primary">
           <tr>
-            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">ID</th>
+            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">CÓDIGO</th>
             <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">PRODUCTO</th>
             <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">PROVEEDOR</th>
             <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">CANT</th>
@@ -90,11 +105,11 @@ export default function ComprasView() {
             <tr className="border-b border-gray-100"><td colSpan={8} className="px-7 py-7 text-center text-gray-400 text-xs">No se encontraron compras</td></tr>
           ) : filtered.map(c => (
             <tr key={c.id} className="border-b border-gray-100 even:bg-gray-50 hover:bg-primary-100 transition-colors duration-100">
-              <td className="px-3 py-2 text-xs text-primary-light font-semibold font-mono">{c.id}</td>
+              <td className="px-3 py-2 text-xs text-primary-light font-semibold font-mono">{c.codigo || c.id}</td>
               <td className="px-3 py-2 text-xs text-gray-700 font-medium">{c.producto}</td>
               <td className="px-3 py-2 text-xs text-gray-700">{c.proveedor}</td>
               <td className="px-3 py-2 text-xs text-gray-700">{c.cantidad} {c.unidad}</td>
-              <td className="px-3 py-2 text-xs text-gray-700 font-semibold">{formatPrice(c.precio)}</td>
+              <td className="px-3 py-2 text-xs text-gray-700 font-semibold">{formatPrice(c.total)}</td>
               <td className="px-3 py-2 text-xs text-gray-700">{c.fecha}</td>
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(c.estado)}`}>{c.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
@@ -120,23 +135,36 @@ export default function ComprasView() {
               <input type="text" value={formData.proveedor || ''} onChange={e => setFormData({...formData, proveedor: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del proveedor" required />
             </label>
             <label className="block">
-              <span className="text-gray-600 text-sm">Producto</span>
-              <input type="text" value={formData.producto || ''} onChange={e => setFormData({...formData, producto: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del producto" />
+              <span className="text-gray-600 text-sm">Producto <span className="text-danger">*</span></span>
+              <input type="text" value={formData.producto || ''} onChange={e => setFormData({...formData, producto: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Nombre del producto comprado" required />
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
-                <span className="text-gray-600 text-sm">Cantidad</span>
-                <input type="number" min="0" value={formData.cantidad ?? ''} onChange={e => setFormData({...formData, cantidad: parseInt(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="0" />
+                <span className="text-gray-600 text-sm">Cantidad <span className="text-danger">*</span></span>
+                <input type="number" min="1" value={formData.cantidad ?? ''} onChange={e => setFormData({...formData, cantidad: parseInt(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="0" required />
               </label>
               <label className="block">
                 <span className="text-gray-600 text-sm">Unidad</span>
-                <input type="text" value={formData.unidad || ''} onChange={e => setFormData({...formData, unidad: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Ej: kg, m, pz" />
+                <select value={formData.unidad || 'pz'} onChange={e => setFormData({...formData, unidad: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1">
+                  <option value="pz">Pieza (pz)</option>
+                  <option value="kg">Kilogramo (kg)</option>
+                  <option value="m">Metro (m)</option>
+                  <option value="lt">Litro (lt)</option>
+                  <option value="bolsa">Bolsa</option>
+                  <option value="caja">Caja</option>
+                </select>
               </label>
             </div>
-            <label className="block">
-              <span className="text-gray-600 text-sm">Total (Bs)</span>
-              <input type="number" step="0.01" min="0" value={formData.precio ?? ''} onChange={e => setFormData({...formData, precio: parseFloat(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="0.00" />
-            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-gray-600 text-sm">Precio Unit. (Bs) <span className="text-danger">*</span></span>
+                <input type="number" step="0.01" min="0" value={formData.precio ?? ''} onChange={e => setFormData({...formData, precio: parseFloat(e.target.value) || 0})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="0.00" required />
+              </label>
+              <label className="block">
+                <span className="text-gray-600 text-sm">Total</span>
+                <div className="w-full border rounded px-3 py-2 text-sm mt-1 bg-gray-50 text-gray-700 font-semibold">{formatPrice((formData.cantidad || 0) * (formData.precio || 0))}</div>
+              </label>
+            </div>
             <label className="block">
               <span className="text-gray-600 text-sm">Estado</span>
               <select value={formData.estado || 'Pendiente'} onChange={e => setFormData({...formData, estado: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1">
@@ -145,6 +173,10 @@ export default function ComprasView() {
                 <option value="Recibido">Recibido</option>
                 <option value="Cancelado">Cancelado</option>
               </select>
+            </label>
+            <label className="block">
+              <span className="text-gray-600 text-sm">Notas</span>
+              <textarea value={formData.notas || ''} onChange={e => setFormData({...formData, notas: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="Observaciones (opcional)" />
             </label>
           </div>
         </FormModal>

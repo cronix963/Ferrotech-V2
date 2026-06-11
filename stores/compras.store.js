@@ -2,16 +2,21 @@ import { create } from 'zustand';
 
 const searchableFields = ['producto', 'proveedor'];
 
-const mapRecord = (record) => ({
-  id: record.id,
-  producto: record.producto || '',
-  proveedor: record.proveedor || '',
-  cantidad: record.cantidad ?? 0,
-  unidad: record.unidad || '',
-  precio: record.precio ?? 0,
-  fecha: record.fecha || '',
-  estado: record.estado || 'Pendiente',
-});
+const mapRecord = (record) => {
+  const item = (record.items && record.items.length > 0) ? record.items[0] : {};
+  return {
+    id: record.id,
+    codigo: record.codigo || '',
+    proveedor: record.proveedor || '',
+    producto: item.producto || '',
+    cantidad: item.cantidad ?? 0,
+    unidad: item.unidad || '',
+    total: record.total ?? 0,
+    notas: record.notas || '',
+    fecha: record.created_at ? new Date(record.created_at).toLocaleDateString('es-BO') : '',
+    estado: record.estado || 'Pendiente',
+  };
+};
 
 const API_ENDPOINT = '/api/compras';
 
@@ -40,6 +45,7 @@ export const useComprasStore = create((set, get) => ({
         body: JSON.stringify(data),
       });
       const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Error al crear compra');
       set((s) => ({ items: [...s.items, mapRecord(json.data)], loading: false }));
     } catch (err) {
       set({ error: err.message, loading: false });
