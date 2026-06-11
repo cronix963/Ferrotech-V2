@@ -25,7 +25,14 @@ export default async function handler(req, res) {
     }
     results.push('Tablas verificadas/creadas');
 
-    /* ─── Seed data with ON CONFLICT DO NOTHING ─── */
+    /* ─── Reset seed data to original state ─── */
+    await query(`DELETE FROM ventas`);
+    await query(`DELETE FROM pedidos WHERE codigo LIKE '#P-171800%'`);
+    await query(`DELETE FROM compras WHERE codigo LIKE '#CO-171800%'`);
+    await query(`DELETE FROM pagos_cobros`);
+    results.push('Seed data reseteado');
+
+    /* ─── Seed data ─── */
     // Categorías
     await query(`INSERT INTO categorias (nombre, descripcion, icono) VALUES
       ('Materiales de Construcción', 'Cemento, varillas, ladrillos y materiales para obra', '🏗️'),
