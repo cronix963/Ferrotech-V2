@@ -3,15 +3,21 @@ import { create } from 'zustand';
 const searchableFields = ['producto', 'proveedor'];
 
 const mapRecord = (record) => {
-  const item = (record.items && record.items.length > 0) ? record.items[0] : {};
+  const items = Array.isArray(record.items) ? record.items : [];
+  const first = items[0] || {};
+  const itemCount = items.reduce((s, i) => s + (i.cantidad || 0), 0);
+  const productLabel = items.length > 1
+    ? `${first.producto || ''} +${items.length - 1} más`
+    : (first.producto || '');
   return {
     id: record.id,
     codigo: record.codigo || '',
     proveedor: record.proveedor || '',
-    producto: item.producto || '',
-    cantidad: item.cantidad ?? 0,
-    unidad: item.unidad || '',
-    total: record.total ?? 0,
+    producto: productLabel,
+    cantidad: itemCount,
+    unidad: first.unidad || 'pz',
+    precio: first.precio ?? 0,
+    total: Number(record.total) || 0,
     notas: record.notas || '',
     fecha: record.created_at ? new Date(record.created_at).toLocaleDateString('es-BO') : '',
     estado: record.estado || 'Pendiente',

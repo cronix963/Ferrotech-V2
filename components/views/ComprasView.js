@@ -53,8 +53,8 @@ export default function ComprasView() {
     try {
       const payload = {
         proveedor: formData.proveedor,
-        items: [{ producto: formData.producto, cantidad: formData.cantidad, unidad: formData.unidad || 'pz', precio: formData.precio }],
-        total: (formData.cantidad || 0) * (formData.precio || 0),
+        items: [{ producto: formData.producto, cantidad: formData.cantidad, unidad: formData.unidad || 'pz', precio: formData.precio || 0 }],
+        total: editing ? formData.total : (formData.cantidad || 0) * (formData.precio || 0),
         estado: formData.estado || 'Pendiente',
         notas: formData.notas || null,
       };
