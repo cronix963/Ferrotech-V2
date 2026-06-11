@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 
-const searchableFields = ['cliente', 'concepto'];
+const searchableFields = ['cliente', 'concepto', 'tipo'];
 
 const mapRecord = (record) => ({
   id: record.id,
   tipo: record.tipo || 'Cobro',
   cliente: record.cliente || '',
   concepto: record.concepto || '',
-  monto: record.monto ?? 0,
-  fecha: record.fecha || '',
+  monto: parseFloat(record.monto) || 0,
+  fecha: record.fecha || record.created_at || '',
   metodo: record.metodo || '',
   estado: record.estado || 'Pendiente',
 });

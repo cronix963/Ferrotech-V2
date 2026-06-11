@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS ventas (id SERIAL PRIMARY KEY, pedido_id INTEGER, ven
 CREATE TABLE IF NOT EXISTS compras (id SERIAL PRIMARY KEY, codigo VARCHAR(50) NOT NULL UNIQUE, proveedor_id INTEGER, proveedor VARCHAR(255) NOT NULL, items JSONB, total NUMERIC(12,2) NOT NULL DEFAULT 0, estado VARCHAR(50) NOT NULL DEFAULT 'Pendiente', notas TEXT, creado_por INTEGER, created_at TIMESTAMP NOT NULL DEFAULT NOW(), FOREIGN KEY (proveedor_id) REFERENCES proveedores(id), FOREIGN KEY (creado_por) REFERENCES users(id));
 CREATE TABLE IF NOT EXISTS envios (id SERIAL PRIMARY KEY, pedido_id INTEGER, direccion VARCHAR(500) NOT NULL, ciudad VARCHAR(100), transportista VARCHAR(255), tracking_numero VARCHAR(100), estado VARCHAR(50) NOT NULL DEFAULT 'Pendiente', fecha_salida TIMESTAMP, fecha_entrega TIMESTAMP, notas TEXT, created_at TIMESTAMP NOT NULL DEFAULT NOW(), FOREIGN KEY (pedido_id) REFERENCES pedidos(id));
 CREATE TABLE IF NOT EXISTS cotizaciones (id SERIAL PRIMARY KEY, codigo VARCHAR(50) NOT NULL UNIQUE, cliente_id INTEGER, cliente VARCHAR(255) NOT NULL, items JSONB, subtotal NUMERIC(12,2) NOT NULL DEFAULT 0, impuesto NUMERIC(12,2) NOT NULL DEFAULT 0, total NUMERIC(12,2) NOT NULL DEFAULT 0, estado VARCHAR(50) NOT NULL DEFAULT 'Pendiente', validez_dias INTEGER NOT NULL DEFAULT 30, notas TEXT, creado_por INTEGER, created_at TIMESTAMP NOT NULL DEFAULT NOW(), FOREIGN KEY (cliente_id) REFERENCES clientes(id), FOREIGN KEY (creado_por) REFERENCES users(id));
-CREATE TABLE IF NOT EXISTS pagos_cobros (id SERIAL PRIMARY KEY, tipo VARCHAR(50) NOT NULL, referencia_id INTEGER, referencia_tipo VARCHAR(50), monto NUMERIC(12,2) NOT NULL DEFAULT 0, metodo VARCHAR(50) NOT NULL, concepto VARCHAR(500), registrado_por INTEGER, created_at TIMESTAMP NOT NULL DEFAULT NOW(), FOREIGN KEY (registrado_por) REFERENCES users(id));
+CREATE TABLE IF NOT EXISTS pagos_cobros (id SERIAL PRIMARY KEY, tipo VARCHAR(50) NOT NULL, referencia_id INTEGER, referencia_tipo VARCHAR(50), monto NUMERIC(12,2) NOT NULL DEFAULT 0, metodo VARCHAR(50) NOT NULL, concepto VARCHAR(500), cliente VARCHAR(255), estado VARCHAR(50) NOT NULL DEFAULT 'Pendiente', registrado_por INTEGER, created_at TIMESTAMP NOT NULL DEFAULT NOW(), FOREIGN KEY (registrado_por) REFERENCES users(id));
 
 INSERT INTO categorias (nombre, descripcion, icono) VALUES ('Materiales de Construcción', 'Cemento, varillas, ladrillos y materiales para obra', '🏗️'), ('Ferretería General', 'Clavos, herramientas manuales y accesorios', '🔧'), ('Electricidad', 'Cables, interruptores y material eléctrico', '⚡'), ('Plomería', 'Tuberías PVC, conexiones y accesorios sanitarios', '🚿'), ('Pinturas', 'Látex, impermeabilizantes y acabados', '🎨'), ('Herramientas', 'Herramientas manuales y eléctricas profesionales', '🔨'), ('Seguridad', 'Equipos de protección personal y seguridad', '🦺'), ('Jardín', 'Riego, herramientas de jardín y exterior', '🌿') ON CONFLICT DO NOTHING;
 
@@ -129,5 +129,34 @@ INSERT INTO cotizaciones (codigo, cliente_id, cliente, items, subtotal, impuesto
  13400.00, 670.00, 14070.00, 30, 'Materiales para obra gris — proyecto puente', 'Vencida', 1, '2026-05-20 10:00:00'),
 ('#C-1719000008', 2, 'Ingeniería Santa Cruz',
  '[{"producto_id":28,"nombre":"Cerradura Puerta Seguridad","cantidad":12,"precio":85.00},{"producto_id":29,"nombre":"Bisagra Premium Acero","cantidad":48,"precio":18.00},{"producto_id":30,"nombre":"Tornillo Para Madera 3 (kg)","cantidad":10,"precio":22.00}]'::jsonb,
- 2104.00, 105.20, 2209.20, 30, 'Cotización para proyecto de 12 departamentos', 'Rechazada', 2, '2026-05-25 16:00:00')
+  2104.00, 105.20, 2209.20, 30, 'Cotización para proyecto de 12 departamentos', 'Rechazada', 2, '2026-05-25 16:00:00')
 ON CONFLICT (codigo) DO NOTHING;
+
+-- Seed data for ventas (linked to existing pedidos)
+INSERT INTO ventas (pedido_id, vendedor_id, cliente_id, total, metodo_pago, notas, estado, created_at) VALUES
+(1, 2, 1, 2727.50, 'Transferencia', 'Venta completada - materiales de construcción', 'Completada', '2026-06-03 10:30:00'),
+(3, 2, 3, 1123.50, 'Efectivo', 'Venta en mostrador - herramientas menores', 'Completada', '2026-06-04 15:00:00'),
+(4, 1, 1, 2089.50, 'Efectivo', 'Venta de materiales para obra', 'Completada', '2026-06-05 09:15:00'),
+(7, 2, 1, 1349.25, 'Tarjeta', 'Pago con tarjeta de crédito', 'Completada', '2026-06-07 11:45:00'),
+(9, 1, 3, 1081.50, 'Transferencia', 'Transferencia bancaria confirmada', 'Completada', '2026-06-09 14:20:00'),
+(10, 2, 1, 310.80, 'Efectivo', 'Venta rápida en POS', 'Completada', '2026-06-10 16:00:00'),
+(2, 1, 2, 1548.75, 'Depósito', 'Pendiente de confirmación de depósito', 'Pendiente', '2026-06-02 08:00:00'),
+(8, 2, 2, 1044.75, 'QR', 'Pago vía QR pendiente', 'Pendiente', '2026-06-08 10:00:00'),
+(6, 1, 3, 1463.70, 'Depósito', 'Esperando confirmación del banco', 'Pendiente', '2026-06-06 08:30:00')
+ON CONFLICT DO NOTHING;
+
+-- Seed data for pagos_cobros (payments and collections)
+INSERT INTO pagos_cobros (tipo, referencia_id, referencia_tipo, monto, metodo, concepto, cliente, estado, created_at) VALUES
+('Cobro', 1, 'venta', 2727.50, 'Transferencia', 'Cobro venta #1 - Constructora Los Andes', 'Constructora Los Andes', 'Cobrado', '2026-06-03 10:35:00'),
+('Cobro', 3, 'venta', 1123.50, 'Efectivo', 'Cobro venta #3 - Distribuidora Norte', 'Distribuidora Norte', 'Cobrado', '2026-06-04 15:05:00'),
+('Cobro', 4, 'venta', 2089.50, 'Efectivo', 'Cobro venta #4 - Constructora Los Andes', 'Constructora Los Andes', 'Cobrado', '2026-06-05 09:20:00'),
+('Cobro', 7, 'venta', 1349.25, 'Tarjeta', 'Cobro venta #7 - Constructora Los Andes', 'Constructora Los Andes', 'Cobrado', '2026-06-07 11:50:00'),
+('Cobro', 9, 'venta', 1081.50, 'Transferencia', 'Cobro venta #9 - Distribuidora Norte', 'Distribuidora Norte', 'Cobrado', '2026-06-09 14:25:00'),
+('Cobro', 10, 'venta', 310.80, 'Efectivo', 'Cobro venta #10 - Constructora Los Andes', 'Constructora Los Andes', 'Cobrado', '2026-06-10 16:05:00'),
+('Pago', NULL, NULL, 4500.00, 'Transferencia', 'Pago a proveedor Aceros del Sur', 'Aceros del Sur', 'Pagado', '2026-06-01 10:00:00'),
+('Pago', NULL, NULL, 1200.00, 'Efectivo', 'Pago de servicios de logística', 'Logística ABC', 'Pagado', '2026-06-05 09:00:00'),
+('Pago', NULL, NULL, 2800.00, 'Transferencia', 'Pago a Ferretería El Tornillo', 'Ferretería El Tornillo', 'Pagado', '2026-06-08 11:30:00'),
+('Cobro', 2, 'venta', 1548.75, 'Depósito', 'Pendiente de cobro - Ingeniería Santa Cruz', 'Ingeniería Santa Cruz', 'Pendiente', '2026-06-02 08:05:00'),
+('Cobro', 8, 'venta', 1044.75, 'QR', 'Pendiente de cobro - Ingeniería Santa Cruz', 'Ingeniería Santa Cruz', 'Pendiente', '2026-06-08 10:05:00'),
+('Cobro', 6, 'venta', 1463.70, 'Depósito', 'Pendiente de cobro - Distribuidora Norte', 'Distribuidora Norte', 'Pendiente', '2026-06-06 08:35:00'),
+('Pago', NULL, NULL, 800.00, 'Efectivo', 'Pago de mantenimiento de equipos', 'ServiTec', 'Pendiente', '2026-06-10 15:00:00');

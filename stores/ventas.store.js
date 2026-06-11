@@ -1,16 +1,16 @@
 import { create } from 'zustand';
 
-const searchableFields = ['id', 'cliente'];
+const searchableFields = ['cliente', 'metodo', 'estado'];
 
 const mapRecord = (record) => ({
   id: record.id,
   cliente: record.cliente || '',
-  fecha: record.fecha || '',
+  fecha: record.fecha || record.created_at || '',
   items: record.items ?? 0,
   subtotal: record.subtotal ?? 0,
   impuesto: record.impuesto ?? 0,
-  total: record.total ?? 0,
-  metodo: record.metodo || '',
+  total: parseFloat(record.total) || 0,
+  metodo: record.metodo || record.metodo_pago || '',
   estado: record.estado || 'Pendiente',
 });
 
