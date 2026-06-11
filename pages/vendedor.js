@@ -328,12 +328,6 @@ export default function Vendedor() {
       c.email.toLowerCase().includes(searchC.toLowerCase()),
   );
 
-  const filteredOrders = orders.filter(
-    (o) =>
-      o.id.toLowerCase().includes(searchO.toLowerCase()) ||
-      o.customer.toLowerCase().includes(searchO.toLowerCase()),
-  );
-
   const filteredProds = products.filter(
     (p) =>
       p.name.toLowerCase().includes(prodSearch.toLowerCase()) ||
@@ -547,23 +541,15 @@ export default function Vendedor() {
         {activeTab === 'pedidos' && (
           <>
             <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
-              <h3 className="text-base text-gray-700">📦 Todos los Pedidos</h3>
-              <div className="flex gap-2">
-                <div className="flex items-center bg-white border border-gray-200 rounded-md px-2.5 min-w-[200px] flex-1 max-w-[300px] focus-within:border-primary-light">
-                  <FiSearch style={{ color: '#A0AEC0', flexShrink: 0 }} />
-                  <input
-                    placeholder="Buscar pedido o cliente..."
-                    value={searchO}
-                    onChange={(e) => setSearchO(e.target.value)}
-                    className="border-0 bg-transparent py-2 pl-1.5 text-xs outline-none w-full text-gray-700"
-                  />
-                </div>
-                <button
-                  onClick={() => setVentaOpen(true)}
-                  className="bg-accent hover:bg-accent-light border-0 text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex items-center gap-1.5"
-                >
-                  <FiPlus /> Nueva Venta
-                </button>
+              <h3 className="text-base text-gray-700">📦 Pedidos Pendientes</h3>
+              <div className="flex items-center bg-white border border-gray-200 rounded-md px-2.5 min-w-[200px] flex-1 max-w-[300px] focus-within:border-primary-light">
+                <FiSearch style={{ color: '#A0AEC0', flexShrink: 0 }} />
+                <input
+                  placeholder="Buscar pedido o cliente..."
+                  value={searchO}
+                  onChange={(e) => setSearchO(e.target.value)}
+                  className="border-0 bg-transparent py-2 pl-1.5 text-xs outline-none w-full text-gray-700"
+                />
               </div>
             </div>
 
@@ -581,7 +567,15 @@ export default function Vendedor() {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((o) => (
+                {orders
+                  .filter((o) => o.estado === 'Pendiente')
+                  .filter((o) =>
+                    searchO
+                      ? o.id.toLowerCase().includes(searchO.toLowerCase()) ||
+                        o.customer.toLowerCase().includes(searchO.toLowerCase())
+                      : true,
+                  )
+                  .map((o) => (
                   <tr key={o.id} className="border-b border-gray-100 transition-colors duration-100 even:bg-gray-50 hover:bg-primary-100">
                     <td className="px-3 py-2 text-xs text-primary-light font-semibold font-mono">{o.id}</td>
                     <td className="px-3 py-2 text-xs text-gray-700 font-medium">{o.customer}</td>
@@ -596,46 +590,28 @@ export default function Vendedor() {
                     </td>
                     <td className="px-3 py-2 text-xs">
                       <div className="flex gap-1">
-                        {o.estado === 'Pendiente' && (
-                          <>
-                            <button
-                              onClick={() => confirmOrder(o.id)}
-                              className="bg-success hover:brightness-110 border-0 text-white px-2.5 py-1.5 rounded-md text-[0.6rem] font-semibold cursor-pointer transition-all flex items-center gap-1"
-                              title="Confirmar pedido"
-                            >
-                              <FiCheck size={11} /> Confirmar
-                            </button>
-                            <button
-                              onClick={() => cancelOrder(o.id)}
-                              className="bg-danger hover:brightness-110 border-0 text-white px-2.5 py-1.5 rounded-md text-[0.6rem] font-semibold cursor-pointer transition-all"
-                              title="Cancelar pedido"
-                            >
-                              <FiX size={11} />
-                            </button>
-                          </>
-                        )}
-                        {o.estado === 'Completado' && (
-                          <button
-                            onClick={() => despacharOrder(o.id)}
-                            className="bg-info hover:brightness-110 border-0 text-white px-2.5 py-1.5 rounded-md text-[0.6rem] font-semibold cursor-pointer transition-all"
-                          >
-                            🚚 Despachar
-                          </button>
-                        )}
-                        {o.estado === 'Despachado' && (
-                          <span className="text-[0.6rem] text-gray-400">✔ Despachado</span>
-                        )}
-                        {o.estado === 'Cancelado' && (
-                          <span className="text-[0.6rem] text-danger">✗ Cancelado</span>
-                        )}
+                        <button
+                          onClick={() => confirmOrder(o.id)}
+                          className="bg-success hover:brightness-110 border-0 text-white px-2.5 py-1.5 rounded-md text-[0.6rem] font-semibold cursor-pointer transition-all flex items-center gap-1"
+                          title="Confirmar pedido"
+                        >
+                          <FiCheck size={11} /> Confirmar
+                        </button>
+                        <button
+                          onClick={() => cancelOrder(o.id)}
+                          className="bg-danger hover:brightness-110 border-0 text-white px-2.5 py-1.5 rounded-md text-[0.6rem] font-semibold cursor-pointer transition-all"
+                          title="Cancelar pedido"
+                        >
+                          <FiX size={11} />
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {filteredOrders.length === 0 && (
+                {orders.filter((o) => o.estado === 'Pendiente').length === 0 && (
                   <tr className="border-b border-gray-100">
                     <td colSpan={8} className="px-7 py-7 text-center text-gray-400 text-xs">
-                      No hay pedidos
+                      No hay pedidos pendientes ✅
                     </td>
                   </tr>
                 )}
@@ -647,7 +623,15 @@ export default function Vendedor() {
         {/* ── TAB: VENTAS ── */}
         {activeTab === 'ventas' && (
           <>
-            <h3 className="text-base text-gray-700 mb-4">💰 Ventas Completadas</h3>
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+              <h3 className="text-base text-gray-700">💰 Ventas Completadas</h3>
+              <button
+                onClick={() => setVentaOpen(true)}
+                className="bg-accent hover:bg-accent-light border-0 text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 flex items-center gap-1.5"
+              >
+                <FiPlus /> Nueva Venta
+              </button>
+            </div>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3.5 mb-5">
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="text-[0.68rem] text-gray-500 font-medium mb-1">Ventas Totales</div>
