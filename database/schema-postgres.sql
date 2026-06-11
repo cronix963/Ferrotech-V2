@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS pagos_cobros (id SERIAL PRIMARY KEY, tipo VARCHAR(50)
 
 INSERT INTO categorias (nombre, descripcion, icono) VALUES ('Materiales de Construcción', 'Cemento, varillas, ladrillos', '🏗️'), ('Ferretería General', 'Clavos, herramientas', '🔧'), ('Electricidad', 'Cables, interruptores', '⚡'), ('Plomería', 'Tuberías PVC', '🚿'), ('Pinturas', 'Látex, acabados', '🎨'), ('Herramientas', 'Herramientas profesionales', '🔨'), ('Seguridad', 'Equipos de protección', '🦺'), ('Jardín', 'Riego, exterior', '🌿') ON CONFLICT DO NOTHING;
 
-INSERT INTO users (email, password_hash, nombre, rol, provider, activo) VALUES ('admin@ferrotech.bo', '$2a$10$rQEY7zGxQz7vN5rXZqOKZeJ8xQZqOKZeJ8xQZqOKZeJ8xQZqOKZe', 'Administrador', 'admin', 'credentials', TRUE) ON CONFLICT (email) DO NOTHING;
-INSERT INTO users (email, password_hash, nombre, rol, provider, activo) VALUES ('vendedor@ferrotech.bo', '$2a$10$rQEY7zGxQz7vN5rXZqOKZeJ8xQZqOKZeJ8xQZqOKZeJ8xQZqOKZe', 'Carlos Vendedor', 'vendedor', 'credentials', TRUE) ON CONFLICT (email) DO NOTHING;
+INSERT INTO users (email, password_hash, nombre, rol, provider, activo) VALUES ('admin@ferrotech.bo', '$2b$10$dE7kHORurC50Yjfh0NEoFuAH9fKvfn0.8GS/fQoyWxjob2oe.nGUW', 'Administrador', 'admin', 'credentials', TRUE) ON CONFLICT (email) DO NOTHING;
+INSERT INTO users (email, password_hash, nombre, rol, provider, activo) VALUES ('vendedor@ferrotech.bo', '$2b$10$pA3pJJi0Rdq/Fz0Rlx.H7.7x9NImO8wDBtmEM8r25u8FkDrwaISaG', 'Carlos Vendedor', 'vendedor', 'credentials', TRUE) ON CONFLICT (email) DO NOTHING;
 INSERT INTO users (email, nombre, rol, provider, activo) VALUES ('cronix963@gmail.com', 'Miguel Fernandez', 'admin', 'google', TRUE) ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO clientes (nombre, email, telefono, direccion, ciudad, nit, empresa) VALUES ('Constructora Los Andes', 'losandes@email.com', '7223456', 'Av. Ballivián 456', 'Santa Cruz', '12345678', 'Los Andes S.A.'), ('Ingeniería Santa Cruz', 'ing.sc@email.com', '7227890', 'Calle 21 de Mayo 789', 'Santa Cruz', '87654321', 'Ing. SC Ltda.'), ('Distribuidora Norte', 'norte@email.com', '7224567', 'Av. Banzer 123', 'Santa Cruz', '11223344', 'Dis. Norte S.R.L.');
