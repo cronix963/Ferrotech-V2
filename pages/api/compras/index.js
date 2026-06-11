@@ -7,12 +7,12 @@ export default async function handler(req, res) {
       return res.status(200).json({ data: result.rows, total: result.rows.length });
     }
     if (req.method === 'POST') {
-      const { proveedor, items, total, notas } = req.body;
+      const { proveedor, proveedor_id, items, total, estado, notas } = req.body;
       if (!proveedor) return res.status(400).json({ error: 'Proveedor es requerido' });
       const codigo = '#CO-' + Date.now();
       const result = await query(
-        `INSERT INTO compras (codigo, proveedor, items, total, notas) VALUES ($1,$2,$3::jsonb,$4,$5) RETURNING *`,
-        [codigo, proveedor, JSON.stringify(items||[]), total||0, notas||null]
+        `INSERT INTO compras (codigo, proveedor, proveedor_id, items, total, estado, notas) VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7) RETURNING *`,
+        [codigo, proveedor, proveedor_id||null, JSON.stringify(items||[]), total||0, estado||'Pendiente', notas||null]
       );
       return res.status(201).json({ data: result.rows[0] });
     }
