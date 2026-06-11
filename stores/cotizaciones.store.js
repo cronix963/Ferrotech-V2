@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const searchableFields = ['codigo', 'cliente', 'email', 'estado'];
+const searchableFields = ['codigo', 'cliente', 'estado'];
 
 const mapRecord = (record) => {
   // Parse JSONB items
@@ -17,9 +17,6 @@ const mapRecord = (record) => {
     id: record.id,
     codigo: record.codigo || `#C-${record.id}`,
     cliente: record.cliente || '',
-    email: record.email || '',
-    telefono: record.telefono || '',
-    direccion: record.direccion || '',
     items: itemsList,
     itemsCount,
     subtotal: parseFloat(record.subtotal) || 0,

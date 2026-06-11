@@ -9,16 +9,14 @@ export default async function handler(req, res) {
       return res.status(200).json(result.rows[0]);
     }
     if (req.method === 'PUT') {
-      const { cliente, email, telefono, direccion, items, subtotal, impuesto, total, validez_dias, notas, estado } = req.body;
+      const { cliente, cliente_id, items, subtotal, impuesto, total, validez_dias, notas, estado, creado_por } = req.body;
 
       const updates = [];
       const params = [];
       let pi = 1;
 
       if (cliente !== undefined) { updates.push(`cliente=$${pi++}`); params.push(cliente); }
-      if (email !== undefined) { updates.push(`email=$${pi++}`); params.push(email); }
-      if (telefono !== undefined) { updates.push(`telefono=$${pi++}`); params.push(telefono); }
-      if (direccion !== undefined) { updates.push(`direccion=$${pi++}`); params.push(direccion); }
+      if (cliente_id !== undefined) { updates.push(`cliente_id=$${pi++}`); params.push(cliente_id); }
       if (items !== undefined) { updates.push(`items=$${pi++}::jsonb`); params.push(JSON.stringify(items)); }
       if (total !== undefined) { updates.push(`total=$${pi++}`); params.push(total); }
       if (subtotal !== undefined) { updates.push(`subtotal=$${pi++}`); params.push(subtotal); }
@@ -26,6 +24,7 @@ export default async function handler(req, res) {
       if (validez_dias !== undefined) { updates.push(`validez_dias=$${pi++}`); params.push(validez_dias); }
       if (notas !== undefined) { updates.push(`notas=$${pi++}`); params.push(notas); }
       if (estado !== undefined) { updates.push(`estado=$${pi++}`); params.push(estado); }
+      if (creado_por !== undefined) { updates.push(`creado_por=$${pi++}`); params.push(creado_por); }
 
       if (updates.length === 0) {
         return res.status(400).json({ error: 'No hay campos para actualizar' });

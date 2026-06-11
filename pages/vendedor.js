@@ -54,6 +54,28 @@ const mapOrder = (r) => {
   };
 };
 
+const mapCotizacion = (r) => {
+  let itemsList = [];
+  if (Array.isArray(r.items)) itemsList = r.items;
+  else if (typeof r.items === 'string') try { itemsList = JSON.parse(r.items); } catch { itemsList = []; }
+  const itemCount = itemsList.reduce((sum, i) => sum + (i.cantidad || i.qty || 1), 0);
+  return {
+    id: r.id,
+    codigo: r.codigo || `#C-${r.id}`,
+    cliente: r.cliente || '',
+    items: itemsList,
+    itemsCount: itemCount,
+    subtotal: parseFloat(r.subtotal) || 0,
+    impuesto: parseFloat(r.impuesto) || 0,
+    total: parseFloat(r.total) || 0,
+    validez_dias: r.validez_dias || 30,
+    estado: r.estado || 'Pendiente',
+    notas: r.notas || '',
+    fecha: formatDate(r.created_at),
+    _raw: r,
+  };
+};
+
 const mapProduct = (r) => ({
   id: r.id,
   name: r.nombre || '',
@@ -69,6 +91,10 @@ const badge = (s) =>
     Pendiente: 'bg-[#FEFCBF] text-[#744210]',
     Despachado: 'bg-primary-100 text-primary',
     Pagado: 'bg-[#C6F6D5] text-[#22543D]',
+    Aprobada: 'bg-[#C6F6D5] text-[#22543D]',
+    Rechazada: 'bg-[#FED7D7] text-[#9B2C2C]',
+    Revisión: 'bg-[#FED7AA] text-[#7B341E]',
+    Vencida: 'bg-[#FED7D7] text-[#9B2C2C]',
   }[s] || 'bg-[#FEFCBF] text-[#744210]');
 
 const tabs = [
@@ -76,6 +102,7 @@ const tabs = [
   { id: 'clientes', label: '👥 Clientes' },
   { id: 'pedidos', label: '📦 Pedidos' },
   { id: 'ventas', label: '💰 Ventas' },
+  { id: 'cotizaciones', label: '📋 Cotizaciones' },
 ];
 
 export default function Vendedor() {
@@ -93,6 +120,20 @@ export default function Vendedor() {
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
 
+  /* ── Cotizaciones ── */
+  const [cotizaciones, setCotizaciones] = useState([]);
+  const [quotesLoading, setQuotesLoading] = useState(false);
+
+  /* ── Modal Nueva Cotización ── */
+  const [cotizOpen, setCotizOpen] = useState(false);
+  const [newQuote, setNewQuote] = useState({
+    customerName: '',
+    items: [],
+    validez_dias: 30,
+    notas: '',
+  });
+  const [prodSearchQ, setProdSearchQ] = useState('');
+
   /* ── Modal Nueva Venta ── */
   const [ventaOpen, setVentaOpen] = useState(false);
   const [newSale, setNewSale] = useState({
@@ -108,14 +149,16 @@ export default function Vendedor() {
   /* ── Fetch all data from PocketBase ── */
   const fetchData = async () => {
     try {
-      const [clientesRes, pedidosRes, productosRes] = await Promise.all([
+      const [clientesRes, pedidosRes, productosRes, cotizacionesRes] = await Promise.all([
         fetch('/api/clientes?limit=200&sort=-created_at').then(r => r.json()),
         fetch('/api/pedidos?limit=200&sort=-created_at').then(r => r.json()),
         fetch('/api/productos?limit=200&sort=-created_at&activo=true').then(r => r.json()),
+        fetch('/api/cotizaciones?limit=200&sort=-created_at').then(r => r.json()),
       ]);
       setCustomers((clientesRes.data || []).map(mapCustomer));
       setOrders((pedidosRes.data || []).map(mapOrder));
       setProducts((productosRes.data || []).map(mapProduct));
+      setCotizaciones((cotizacionesRes.data || []).map(mapCotizacion));
     } catch (err) {
       console.error('Failed to load data:', err);
     }
@@ -687,7 +730,316 @@ export default function Vendedor() {
             </table>
           </>
         )}
+
+        {/* ── TAB: COTIZACIONES ── */}
+        {activeTab === 'cotizaciones' && (
+          <>
+            <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+              <h3 className="text-base text-gray-700">📋 Cotizaciones</h3>
+              <button
+                onClick={() => {
+                  setNewQuote({ customerName: '', items: [], validez_dias: 30, notas: '' });
+                  setProdSearchQ('');
+                  setCotizOpen(true);
+                }}
+                className="bg-accent hover:brightness-110 border-0 text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all flex items-center gap-1.5"
+              >
+                <FiPlus /> Nueva Cotización
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">Presupuestos y cotizaciones a clientes</p>
+
+            <table className="w-full border-collapse bg-white rounded-lg overflow-hidden border border-gray-200">
+              <thead className="bg-primary">
+                <tr>
+                  <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">COTIZACIÓN</th>
+                  <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">CLIENTE</th>
+                  <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">FECHA</th>
+                  <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">ITEMS</th>
+                  <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">TOTAL</th>
+                  <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">VALIDEZ</th>
+                  <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">ESTADO</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cotizaciones.map((c) => (
+                  <tr key={c.id} className="border-b border-gray-100 transition-colors duration-100 even:bg-gray-50 hover:bg-primary-100">
+                    <td className="px-3 py-2 text-xs text-primary-light font-semibold font-mono">{c.codigo}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 font-medium">{c.cliente}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700">{c.fecha}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700">{c.itemsCount} uds</td>
+                    <td className="px-3 py-2 text-xs text-gray-700 font-semibold">{formatPrice(c.total)}</td>
+                    <td className="px-3 py-2 text-xs text-gray-700">{c.validez_dias} días</td>
+                    <td className="px-3 py-2 text-xs">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(c.estado)}`}>{c.estado}</span>
+                    </td>
+                  </tr>
+                ))}
+                {cotizaciones.length === 0 && (
+                  <tr className="border-b border-gray-100">
+                    <td colSpan={7} className="px-7 py-7 text-center text-gray-400 text-xs">
+                      No hay cotizaciones aún
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
+
+      {/* ═══ MODAL: NUEVA COTIZACIÓN ═══ */}
+      {cotizOpen && (
+        <div className="fixed inset-0 bg-black/50 z-[400] flex items-start justify-center p-5 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-[700px] my-5 overflow-hidden shadow-2xl">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-primary text-white">
+              <h3 className="text-base font-semibold flex items-center gap-2">
+                <FiPlus /> Nueva Cotización
+              </h3>
+              <button
+                className="w-8 h-8 flex items-center justify-center border-0 rounded-md bg-white/15 cursor-pointer text-white hover:bg-white/25 transition-all"
+                onClick={() => {
+                  setCotizOpen(false);
+                  setNewQuote({ customerName: '', items: [], validez_dias: 30, notas: '' });
+                  setProdSearchQ('');
+                }}
+              >
+                <FiX size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 max-h-[70vh] overflow-y-auto">
+              {/* Selector de Cliente */}
+              <div className="mb-5">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">CLIENTE</label>
+                <select
+                  value={newQuote.customerName}
+                  onChange={(e) => setNewQuote((prev) => ({ ...prev, customerName: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none bg-white focus:border-primary-light"
+                >
+                  <option value="">Seleccioná un cliente...</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  placeholder="O escribí un nombre nuevo..."
+                  value={
+                    !customers.find((c) => c.name === newQuote.customerName)
+                      ? newQuote.customerName
+                      : ''
+                  }
+                  onChange={(e) => setNewQuote((prev) => ({ ...prev, customerName: e.target.value }))}
+                  className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg text-xs text-gray-700 outline-none focus:border-primary-light"
+                />
+              </div>
+
+              {/* Buscador de Productos */}
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">AGREGAR PRODUCTOS</label>
+                <div className="flex items-center bg-white border border-gray-200 rounded-md px-2.5 focus-within:border-primary-light">
+                  <FiSearch />
+                  <input
+                    placeholder="Buscar productos..."
+                    value={prodSearchQ}
+                    onChange={(e) => setProdSearchQ(e.target.value)}
+                    className="border-0 bg-transparent py-2 pl-1.5 text-xs outline-none w-full text-gray-700"
+                  />
+                </div>
+              </div>
+
+              {/* Grid de productos */}
+              {prodSearchQ && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4 max-h-[200px] overflow-y-auto border border-gray-100 rounded-lg p-2">
+                  {products.filter(
+                    (p) => p.name.toLowerCase().includes(prodSearchQ.toLowerCase()) ||
+                           p.cat.toLowerCase().includes(prodSearchQ.toLowerCase())
+                  ).map((p) => {
+                    const inCart = newQuote.items.find((i) => i.id === p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          setNewQuote((prev) => {
+                            const existing = prev.items.find((i) => i.id === p.id);
+                            if (existing) {
+                              return { ...prev, items: prev.items.map((i) => i.id === p.id ? { ...i, qty: i.qty + 1 } : i) };
+                            }
+                            return { ...prev, items: [...prev.items, { ...p, qty: 1, precio: p.price }] };
+                          });
+                        }}
+                        className={`text-left p-2.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                          inCart ? 'bg-primary-100 border-primary text-primary' : 'bg-white border-gray-200 text-gray-700 hover:border-primary-light hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="text-lg mb-0.5">{p.icon}</div>
+                        <div className="font-semibold leading-tight">{p.name}</div>
+                        <div className="text-[0.6rem] text-gray-400">{p.cat}</div>
+                        <div className="text-primary font-bold mt-0.5">Bs{p.price.toFixed(2)}</div>
+                      </button>
+                    );
+                  })}
+                  {products.filter(
+                    (p) => p.name.toLowerCase().includes(prodSearchQ.toLowerCase()) ||
+                           p.cat.toLowerCase().includes(prodSearchQ.toLowerCase())
+                  ).length === 0 && (
+                    <div className="col-span-full text-center py-4 text-gray-400 text-xs">Sin resultados</div>
+                  )}
+                </div>
+              )}
+
+              {/* Items agregados */}
+              {newQuote.items.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-xs font-semibold text-gray-600 mb-2">
+                    PRODUCTOS AGREGADOS ({newQuote.items.reduce((s, i) => s + i.qty, 0)} uds)
+                  </h4>
+                  <div className="space-y-1.5">
+                    {newQuote.items.map((i) => (
+                      <div key={i.id} className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                        <span className="text-lg">{i.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-gray-700 truncate">{i.name}</div>
+                          <div className="text-[0.6rem] text-gray-400">Bs{i.price.toFixed(2)} c/u</div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button className="w-[22px] h-[22px] border border-gray-200 rounded cursor-pointer flex items-center justify-center text-xs bg-white text-gray-600 hover:bg-gray-100"
+                            onClick={() => setNewQuote((prev) => ({
+                              ...prev,
+                              items: prev.items.map((it) => it.id === i.id ? { ...it, qty: Math.max(1, it.qty - 1) } : it)
+                                .filter((it) => it.qty > 0),
+                            }))}>
+                            <FiMinus size={10} />
+                          </button>
+                          <span className="text-xs font-semibold min-w-[18px] text-center">{i.qty}</span>
+                          <button className="w-[22px] h-[22px] border border-gray-200 rounded cursor-pointer flex items-center justify-center text-xs bg-white text-gray-600 hover:bg-gray-100"
+                            onClick={() => setNewQuote((prev) => ({
+                              ...prev,
+                              items: prev.items.map((it) => it.id === i.id ? { ...it, qty: it.qty + 1 } : it),
+                            }))}>
+                            <FiPlus size={10} />
+                          </button>
+                        </div>
+                        <div className="text-xs font-bold text-primary min-w-[55px] text-right">
+                          Bs{(i.price * i.qty).toFixed(2)}
+                        </div>
+                        <button className="text-gray-400 hover:text-danger cursor-pointer bg-none border-0"
+                          onClick={() => setNewQuote((prev) => ({
+                            ...prev,
+                            items: prev.items.filter((it) => it.id !== i.id),
+                          }))}>
+                          <FiX size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Vigencia + Notas */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">VALIDEZ (días)</label>
+                  <input type="number" min="1" value={newQuote.validez_dias}
+                    onChange={(e) => setNewQuote((prev) => ({ ...prev, validez_dias: parseInt(e.target.value) || 30 }))}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-primary-light" />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">NOTAS</label>
+                <textarea rows={2} value={newQuote.notas}
+                  onChange={(e) => setNewQuote((prev) => ({ ...prev, notas: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:border-primary-light resize-none" />
+              </div>
+
+              {/* Resumen de totales */}
+              {(() => {
+                const qSubtotal = newQuote.items.reduce((s, i) => s + i.price * i.qty, 0);
+                const qImpuesto = qSubtotal * 0.05;
+                const qTotal = qSubtotal + qImpuesto;
+                const qCount = newQuote.items.reduce((s, i) => s + i.qty, 0);
+                return (
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-1.5">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Subtotal ({qCount} productos)</span>
+                      <span>Bs{qSubtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Impuesto (5%)</span>
+                      <span>Bs{qImpuesto.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-1.5 border-t border-gray-200">
+                      <span className="text-sm font-semibold text-gray-700">Total</span>
+                      <span className="text-2xl font-bold text-primary">Bs{qTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2.5">
+              <button
+                className="px-5 py-2.5 rounded-lg text-sm font-semibold cursor-pointer bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all"
+                onClick={() => {
+                  setCotizOpen(false);
+                  setNewQuote({ customerName: '', items: [], validez_dias: 30, notas: '' });
+                  setProdSearchQ('');
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                className="px-5 py-2.5 rounded-lg text-sm font-semibold cursor-pointer bg-accent text-white border-0 hover:brightness-110 transition-all flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!newQuote.customerName || newQuote.items.length === 0}
+                onClick={async () => {
+                  const qSubtotal = newQuote.items.reduce((s, i) => s + i.price * i.qty, 0);
+                  const qImpuesto = qSubtotal * 0.05;
+                  const qTotal = qSubtotal + qImpuesto;
+
+                  try {
+                    await fetch('/api/cotizaciones', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        cliente: newQuote.customerName,
+                        items: newQuote.items.map((i) => ({
+                          producto_id: i.id,
+                          nombre: i.name,
+                          cantidad: i.qty,
+                          precio: i.price,
+                        })),
+                        subtotal: qSubtotal,
+                        impuesto: qImpuesto,
+                        total: qTotal,
+                        validez_dias: newQuote.validez_dias,
+                        notas: newQuote.notas,
+                        estado: 'Pendiente',
+                        creado_por: user?.id,
+                      }),
+                    });
+
+                    // Refresh cotizaciones
+                    const res = await fetch('/api/cotizaciones?limit=200&sort=-created_at').then(r => r.json());
+                    setCotizaciones((res.data || []).map(mapCotizacion));
+
+                    setCotizOpen(false);
+                    setNewQuote({ customerName: '', items: [], validez_dias: 30, notas: '' });
+                    setProdSearchQ('');
+                  } catch (err) {
+                    console.error('Error al crear cotización:', err);
+                  }
+                }}
+              >
+                <FiCheck /> Guardar Cotización
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ MODAL: NUEVA VENTA ═══ */}
       {ventaOpen && (
