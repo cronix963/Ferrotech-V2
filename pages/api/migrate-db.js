@@ -79,7 +79,7 @@ ON CONFLICT DO NOTHING`);
     results.push(`Ventas insertadas: ${ventasCount.rowCount}`);
 
     /* ─── 4. Seed de pagos_cobros ─── */
-    await query(`INSERT INTO pagos_cobros (tipo, referencia_id, referencia_tipo, monto, metodo, concepto, created_at) VALUES
+    const pagosCount = await query(`INSERT INTO pagos_cobros (tipo, referencia_id, referencia_tipo, monto, metodo, concepto, created_at) VALUES
 ('Cobro', 1, 'venta', 2727.50, 'Transferencia', 'Cobro venta #1 - Constructora Los Andes', '2026-06-03 10:35:00'),
 ('Cobro', 3, 'venta', 1123.50, 'Efectivo', 'Cobro venta #3 - Distribuidora Norte', '2026-06-04 15:05:00'),
 ('Cobro', 4, 'venta', 2089.50, 'Efectivo', 'Cobro venta #4 - Constructora Los Andes', '2026-06-05 09:20:00'),
@@ -87,7 +87,7 @@ ON CONFLICT DO NOTHING`);
 ('Cobro', 9, 'venta', 1081.50, 'Transferencia', 'Cobro venta #9 - Distribuidora Norte', '2026-06-09 14:25:00'),
 ('Cobro', 10, 'venta', 310.80, 'Efectivo', 'Cobro venta #10 - Constructora Los Andes', '2026-06-10 16:05:00'),
 ('Pago', NULL, NULL, 4500.00, 'Transferencia', 'Pago a proveedor Aceros del Sur', '2026-06-01 10:00:00'),
-('Pago', NULL, NULL, 1200.00, 'Efectivo', 'Pago de servicios de logística', 'Logística ABC', '2026-06-05 09:00:00'),
+('Pago', NULL, NULL, 1200.00, 'Efectivo', 'Pago de servicios de logística', '2026-06-05 09:00:00'),
 ('Pago', NULL, NULL, 2800.00, 'Transferencia', 'Pago a Ferretería El Tornillo', '2026-06-08 11:30:00')
 ON CONFLICT DO NOTHING`);
     results.push(`Pagos/Cobros insertados: ${pagosCount.rowCount}`);
