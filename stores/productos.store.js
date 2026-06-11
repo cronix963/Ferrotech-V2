@@ -26,6 +26,7 @@ const mapRecord = (record) => {
     precio,
     precio_compra,
     unidad: record.unidad || 'unidad',
+    activo: record.activo !== false,
     estado,
     icono: record.icono || '📦',
     imagen: record.imagen || null,

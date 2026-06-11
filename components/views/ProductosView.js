@@ -80,12 +80,13 @@ export default function ProductosView() {
             <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">STOCK</th>
             <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">PRECIO</th>
             <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">ESTADO</th>
+            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">ACTIVO</th>
             <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-center w-24">ACCIONES</th>
           </tr>
         </thead>
         <tbody>
           {filtered.length === 0 ? (
-            <tr className="border-b border-gray-100"><td colSpan={6} className="px-7 py-7 text-center text-gray-400 text-xs">No se encontraron productos</td></tr>
+            <tr className="border-b border-gray-100"><td colSpan={7} className="px-7 py-7 text-center text-gray-400 text-xs">No se encontraron productos</td></tr>
           ) : filtered.map(p => (
             <tr key={p.id} className="border-b border-gray-100 even:bg-gray-50 hover:bg-primary-100 transition-colors duration-100">
               <td className="px-3 py-2 text-xs text-gray-700 font-medium">{p.nombre}</td>
@@ -98,6 +99,7 @@ export default function ProductosView() {
               </td>
               <td className="px-3 py-2 text-xs text-gray-700 font-semibold">{formatPrice(p.precio)}</td>
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(p.estado)}`}>{p.estado}</span></td>
+              <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${p.activo ? 'bg-[#C6F6D5] text-[#22543D]' : 'bg-[#FED7D7] text-[#9B2C2C]'}`}>{p.activo ? 'Activo' : 'Inactivo'}</span></td>
               <td className="px-3 py-2 text-xs text-center">
                 <button onClick={() => openEditForm(p)} className="text-primary hover:underline text-xs mr-3">Editar</button>
                 <button onClick={() => {
