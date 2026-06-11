@@ -18,8 +18,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ data: result.rows[0] });
     }
     if (req.method === 'DELETE') {
-      await query('UPDATE productos SET activo = FALSE, updated_at = NOW() WHERE id = $1', [id]);
-      return res.status(200).json({ message: 'Producto eliminado' });
+      const result = await query('DELETE FROM productos WHERE id = $1', [id]);
+      if (result.rowCount === 0) return res.status(404).json({ error: 'Producto no encontrado' });
+      return res.status(200).json({ message: 'Producto eliminado permanentemente' });
     }
     return res.status(405).json({ error: 'Método no permitido' });
   } catch (err) {

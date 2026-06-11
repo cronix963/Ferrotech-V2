@@ -5,6 +5,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import ErrorBanner from '../ErrorBanner';
 import EmptyState from '../EmptyState';
 import FormModal from '../FormModal';
+import ConfirmModal from '../ConfirmModal';
 
 const badge = (s) => ({
   'Activo':'bg-[#C6F6D5] text-[#22543D]','Inactivo':'bg-[#FED7D7] text-[#9B2C2C]',
@@ -17,6 +18,10 @@ export default function ProveedoresView() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
   const [q, setQ] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteStats, setDeleteStats] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -81,7 +86,17 @@ export default function ProveedoresView() {
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(p.estado)}`}>{p.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
                 <button onClick={() => { setEditing(p); setFormData({ ...p }); setShowForm(true); }} className="text-primary hover:underline text-xs mr-3">Editar</button>
-                <button onClick={() => { if (confirm('¿Eliminar proveedor?')) removeItem(p.id); }} className="text-danger hover:underline text-xs">Eliminar</button>
+                <button onClick={async () => {
+                  setDeleteTarget({ id: p.id, nombre: p.nombre });
+                  try {
+                    const res = await fetch(`/api/proveedores/${p.id}?stats=true`);
+                    const data = await res.json();
+                    setDeleteStats(data);
+                  } catch {
+                    setDeleteStats(null);
+                  }
+                  setShowDeleteModal(true);
+                }} className="text-danger hover:underline text-xs">Eliminar</button>
               </td>
             </tr>
           ))}
@@ -117,6 +132,29 @@ export default function ProveedoresView() {
             </label>
           </div>
         </FormModal>
+      )}
+
+      {showDeleteModal && deleteTarget && (
+        <ConfirmModal
+          show={showDeleteModal}
+          onClose={() => { setShowDeleteModal(false); setDeleteTarget(null); setDeleteStats(null); }}
+          onConfirm={async () => {
+            setDeleting(true);
+            await removeItem(deleteTarget.id);
+            setShowDeleteModal(false);
+            setDeleteTarget(null);
+            setDeleteStats(null);
+            setDeleting(false);
+          }}
+          title="Eliminar Proveedor"
+          message={`¿Eliminar "${deleteTarget.nombre}"?`}
+          details={deleteStats ? (
+            deleteStats.compras > 0
+              ? `Tiene ${deleteStats.compras} compras asociadas.`
+              : 'No tiene registros asociados.'
+          ) : ''}
+          loading={deleting}
+        />
       )}
     </div>
   );

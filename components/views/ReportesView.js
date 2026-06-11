@@ -9,31 +9,18 @@ import {
 } from 'react-icons/fi';
 import { formatPrice } from '../../lib/price';
 
-const formatDate = (iso) => {
+const formatDateTime = (iso) => {
   if (!iso) return '';
   try {
-    return new Date(iso).toLocaleDateString('es-ES');
-  } catch {
-    return '';
-  }
-};
-
-const timeAgo = (iso) => {
-  if (!iso) return '';
-
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-
-  if (mins < 1) return 'Ahora';
-  if (mins < 60) return `Hace ${mins} min`;
-
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `Hace ${hrs} h`;
-
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return `Hace ${days} día${days > 1 ? 's' : ''}`;
-
-  return formatDate(iso);
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch { return ''; }
 };
 
 export default function ReportesView() {
@@ -112,13 +99,9 @@ export default function ReportesView() {
         ]);
 
         const activity = (recentPedidos.data || []).map((p) => ({
-          action: `Nuevo pedido ${
-            p.codigo || String(p.id).slice(0, 8).toUpperCase()
-          }`,
-          detail: `${p.cliente || '—'} — ${formatPrice(
-            parseFloat(p.total) || 0,
-          )}`,
-          time: timeAgo(p.created_at),
+          action: `Nuevo pedido ${p.codigo || String(p.id).slice(0, 8).toUpperCase()}`,
+          detail: `${p.cliente || '—'} — ${formatPrice(parseFloat(p.total) || 0)}`,
+          time: formatDateTime(p.created_at),
         }));
 
         setRecentActivity(activity);
@@ -394,15 +377,9 @@ export default function ReportesView() {
       <table className="w-full border-collapse bg-white rounded-lg overflow-hidden border border-gray-200">
         <thead className="bg-primary">
           <tr>
-            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">
-              ACCIÓN
-            </th>
-            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">
-              DETALLE
-            </th>
-            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">
-              TIEMPO
-            </th>
+            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">ACCIÓN</th>
+            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">DETALLE</th>
+            <th className="text-white font-semibold text-[0.68rem] uppercase tracking-wider px-3 py-2.5 text-left">HORA Y FECHA</th>
           </tr>
         </thead>
 

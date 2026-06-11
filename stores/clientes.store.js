@@ -9,7 +9,7 @@ const mapRecord = (record) => ({
   tel: record.telefono || '',
   email: record.email || '',
   tipo: record.tipo || 'Particular',
-  estado: 'Activo',
+  estado: record.activo !== false ? 'Activo' : 'Inactivo',
 });
 
 const API_ENDPOINT = '/api/clientes';

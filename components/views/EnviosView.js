@@ -5,6 +5,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import ErrorBanner from '../ErrorBanner';
 import EmptyState from '../EmptyState';
 import FormModal from '../FormModal';
+import ConfirmModal from '../ConfirmModal';
 
 const badge = (s) => ({
   'Entregado':'bg-[#C6F6D5] text-[#22543D]','Cancelado':'bg-[#FED7D7] text-[#9B2C2C]','Pendiente':'bg-[#FEFCBF] text-[#744210]',
@@ -18,6 +19,9 @@ export default function EnviosView() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
   const [q, setQ] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -82,7 +86,10 @@ export default function EnviosView() {
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(e.estado)}`}>{e.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
                 <button onClick={() => { setEditing(e); setFormData({ ...e }); setShowForm(true); }} className="text-primary hover:underline text-xs mr-3">Editar</button>
-                <button onClick={() => { if (confirm('¿Eliminar envío?')) removeItem(e.id); }} className="text-danger hover:underline text-xs">Eliminar</button>
+                <button onClick={() => {
+                  setDeleteTarget({ id: e.id, nombre: e.cliente });
+                  setShowDeleteModal(true);
+                }} className="text-danger hover:underline text-xs">Eliminar</button>
               </td>
             </tr>
           ))}
@@ -120,6 +127,23 @@ export default function EnviosView() {
             </label>
           </div>
         </FormModal>
+      )}
+
+      {showDeleteModal && deleteTarget && (
+        <ConfirmModal
+          show={showDeleteModal}
+          onClose={() => { setShowDeleteModal(false); setDeleteTarget(null); }}
+          onConfirm={async () => {
+            setDeleting(true);
+            await removeItem(deleteTarget.id);
+            setShowDeleteModal(false);
+            setDeleteTarget(null);
+            setDeleting(false);
+          }}
+          title="Eliminar Envío"
+          message={`¿Eliminar envío de "${deleteTarget.nombre}"?`}
+          loading={deleting}
+        />
       )}
     </div>
   );

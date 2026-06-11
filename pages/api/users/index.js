@@ -3,7 +3,7 @@ import { query } from '../../../lib/db';
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const result = await query('SELECT * FROM users ORDER BY created_at DESC');
+      const result = await query('SELECT * FROM users WHERE activo = TRUE ORDER BY created_at DESC');
       return res.status(200).json({ data: result.rows, total: result.rows.length });
     }
     if (req.method === 'POST') {

@@ -5,6 +5,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import ErrorBanner from '../ErrorBanner';
 import EmptyState from '../EmptyState';
 import FormModal from '../FormModal';
+import ConfirmModal from '../ConfirmModal';
 import { formatPrice } from '../../lib/price';
 
 const badge = (s) => ({
@@ -18,6 +19,9 @@ export default function ProductosView() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
   const [q, setQ] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -85,7 +89,10 @@ export default function ProductosView() {
               <td className="px-3 py-2 text-xs"><span className={`inline-flex px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${badge(p.estado)}`}>{p.estado}</span></td>
               <td className="px-3 py-2 text-xs text-center">
                 <button onClick={() => { setEditing(p); setFormData({ ...p }); setShowForm(true); }} className="text-primary hover:underline text-xs mr-3">Editar</button>
-                <button onClick={() => { if (confirm('¿Eliminar producto?')) removeItem(p.id); }} className="text-danger hover:underline text-xs">Eliminar</button>
+                <button onClick={() => {
+                  setDeleteTarget({ id: p.id, nombre: p.nombre });
+                  setShowDeleteModal(true);
+                }} className="text-danger hover:underline text-xs">Eliminar</button>
               </td>
             </tr>
           ))}
@@ -124,6 +131,24 @@ export default function ProductosView() {
             </label>
           </div>
         </FormModal>
+      )}
+
+      {showDeleteModal && deleteTarget && (
+        <ConfirmModal
+          show={showDeleteModal}
+          onClose={() => { setShowDeleteModal(false); setDeleteTarget(null); }}
+          onConfirm={async () => {
+            setDeleting(true);
+            await removeItem(deleteTarget.id);
+            setShowDeleteModal(false);
+            setDeleteTarget(null);
+            setDeleting(false);
+          }}
+          title="Eliminar Producto"
+          message={`¿Eliminar "${deleteTarget.nombre}"?`}
+          details="Productos sin registros asociados — se eliminará de forma permanente."
+          loading={deleting}
+        />
       )}
     </div>
   );

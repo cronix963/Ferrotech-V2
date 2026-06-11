@@ -7,7 +7,7 @@ const mapRecord = (record) => ({
   nombre: record.nombre || record.email || '',
   email: record.email || '',
   rol: record.rol || 'cliente',
-  estado: 'Activo',
+  estado: record.activo !== false ? 'Activo' : 'Inactivo',
 });
 
 const API_ENDPOINT = '/api/users';
