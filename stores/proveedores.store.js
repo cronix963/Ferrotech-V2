@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const searchableFields = ['nombre', 'rubro'];
+const searchableFields = ['nombre'];
 
 const mapRecord = (record) => ({
   id: record.id,
@@ -8,7 +8,7 @@ const mapRecord = (record) => ({
   contacto: record.contacto || '',
   tel: record.telefono || '',
   email: record.email || '',
-  rubro: record.rubro || '',
+
   estado: record.estado || 'Activo',
 });
 
