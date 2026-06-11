@@ -30,11 +30,7 @@ export default function Header() {
   return (
     <header className="bg-primary px-4 py-2.5 flex items-center justify-between gap-3 sm:px-6 lg:px-8">
       <div className="flex items-center gap-2.5 shrink-0 cursor-pointer" onClick={() => router.push('/dashboard')}>
-        <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center font-bold text-sm text-white">F</div>
-        <div>
-          <span className="text-white font-bold text-sm tracking-wide">FERROTECH</span>
-          <span className="text-[0.6rem] text-white/40 block tracking-wider">SISTEMA DE GESTIÓN</span>
-        </div>
+        <img src="/images/productos/ferrotech_logo.svg" alt="FERROTECH" className="h-9 w-auto" />
       </div>
 
       <div ref={searchRef} className="hidden sm:block flex-1 max-w-[360px] relative">

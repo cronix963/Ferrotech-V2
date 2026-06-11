@@ -13,7 +13,7 @@ export default function Factura() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl max-w-[500px] w-full shadow-xl p-8">
         <div className="text-center mb-6">
-          <div className="text-3xl font-extrabold text-primary tracking-wider">FERROTECH</div>
+          <img src="/images/productos/ferrotech_logo.svg" alt="FERROTECH" className="h-14 w-auto mx-auto" />
           <div className="text-[0.65rem] text-gray-400 uppercase tracking-widest">Factura de Venta</div>
         </div>
 

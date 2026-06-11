@@ -145,7 +145,7 @@ export default function Tienda() {
       {/* HEADER */}
       <header className="bg-primary px-6 py-3 flex items-center justify-between gap-4 sticky top-0 z-50 sm:px-6 max-sm:px-3 max-sm:py-2.5">
         <div className="flex items-center gap-2.5 text-white font-bold text-lg cursor-pointer" onClick={() => router.push('/tienda')}>
-          <span className="bg-white/15 w-8 h-8 rounded-lg flex items-center justify-center">🔧</span> FERROTECH
+          <img src="/images/productos/ferrotech_logo.svg" alt="FERROTECH" className="h-9 w-auto" />
         </div>
         <div className="flex-1 max-w-[500px] relative">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={15} />
