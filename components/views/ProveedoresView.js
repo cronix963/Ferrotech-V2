@@ -144,6 +144,13 @@ export default function ProveedoresView() {
                 <input type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full border rounded px-3 py-2 text-sm mt-1" placeholder="correo@ejemplo.com" />
               </label>
             </div>
+            <label className="block">
+              <span className="text-gray-600 text-sm">Estado</span>
+              <select value={formData.activo !== false ? 'activo' : 'inactivo'} onChange={e => setFormData({...formData, activo: e.target.value === 'activo'})} className="w-full border rounded px-3 py-2 text-sm mt-1">
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </label>
           </div>
         </FormModal>
       )}

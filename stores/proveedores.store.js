@@ -8,8 +8,8 @@ const mapRecord = (record) => ({
   contacto: record.contacto || '',
   tel: record.telefono || '',
   email: record.email || '',
-
-  estado: record.estado || 'Activo',
+  activo: record.activo !== false,
+  estado: record.activo !== false ? 'Activo' : 'Inactivo',
 });
 
 const API_ENDPOINT = '/api/proveedores';
